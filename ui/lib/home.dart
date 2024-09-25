@@ -3,6 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
+import 'package:file_picker/file_picker.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -12,14 +18,91 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  XFile? _imageFile; // To store the picked image
+  XFile? _pickedFile; // To store the picked image
+  Uint8List? _fileBytes;
+  String? _fileName;
+  final user = FirebaseAuth.instance.currentUser;
+
+
+  /* Function to handle image selection (modify as per your implementation)
+  Future<void> _pickImage() async {
+    // Your code to pick the image and set _pickedFile
+    // For example, using ImagePicker:
+    // final pickedFile = await ImagePicker().getImage(source: ImageSource.gallery);
+    // setState(() {
+    //   _pickedFile = File(pickedFile.path);
+    //   _onImageSelected();
+    // });
+
+    // For demonstration, let's assume _pickedFile is set here
+    setState(() {
+      _pickedFile = File('path/to/your/image.png');
+      _onImageSelected(); // Call the function when image is selected
+    });
+  }
+
+  // Function to be called when an image is selected
+  void _onImageSelected() {
+    if (_pickedFile != null && !_hasSentRequest) {
+      _hasSentRequest = true;
+      _makeHttpRequest();
+    }
+  }*/
+
+  // Function to make the HTTP request
+  Future<void> _postPostImageToDB() async {
+    final url = 'https://us-central1-puurlee.cloudfunctions.net/file_to_nosql'; //'http://127.0.0.1:8080';
+    final userId = user!.uid;
+
+    try {
+      // Example HTTP POST request
+      var request = http.MultipartRequest('POST', Uri.parse(url));
+      // Check which image data is available and add it to the request
+      if (_fileBytes != null) {
+        // Replace with the actual file name if available
+        String? mimeType = lookupMimeType(_fileName!);
+
+        if (mimeType != null) {
+          final mimeTypeData = mimeType.split('/');
+
+          request.files.add(http.MultipartFile.fromBytes(
+            'file',
+            _fileBytes!,
+            filename: _fileName,
+            contentType: MediaType(mimeTypeData[0], mimeTypeData[1]),
+          ));
+        } else {
+          // Handle error: could not determine MIME type
+          print('Could not determine MIME type of the file.');
+          return;
+        }
+      }  else {
+        // Handle the case where no image is selected
+        print('_postPostImageToDB No image selected.');
+        return; // Exit the function early
+      }
+      request.fields['user_id'] = userId;
+
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        print('Image uploaded successfully.');
+        // Handle success response
+      } else {
+        print('Image upload failed with status: ${response.statusCode}.');
+        // Handle failure response
+      }
+    } catch (e) {
+      print('An error occurred: $e');
+      // Handle exception
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
 
     // Check if displayName is null and redirect to enter name screen if necessary
-    if (user != null && user.displayName == null) {
+    if (user != null && user?.displayName == null) {
       return EnterNameScreen();
     }
 
@@ -51,8 +134,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: Theme.of(context).textTheme.displaySmall,
               ),
               const SizedBox(height: 20),
-              _imageFile != null
-                  ? Image.file(File(_imageFile!.path))
+              _pickedFile != null || _fileBytes != null
+                  ? kIsWeb
+                    ? Image.memory(_fileBytes!)
+                    : Image.file(File(_pickedFile!.path))
                   : const Text('No image selected.'),
             ],
           ),
@@ -70,16 +155,30 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _openCamera() async {
     final picker = ImagePicker();
     try {
-      final pickedFile = await picker.pickImage(source: ImageSource.camera);
-
-      if (pickedFile != null) {
-        setState(() {
-          _imageFile = pickedFile;
-        });
-        // You can add additional logic to handle the image
+      if (!kIsWeb){
+        _pickedFile = await picker.pickImage(source: ImageSource.camera);
+        _fileBytes = await _pickedFile!.readAsBytes();
+        _fileName = _pickedFile!.name;
       } else {
-        print('No image selected.');
+        final allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
+
+        // Open the file picker
+        FilePickerResult? result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: allowedExtensions,
+        );
+
+        if (result != null) {
+          _fileBytes = result.files.first.bytes;
+          _fileName = result.files.first.name;
+        }
       }
+
+      _postPostImageToDB();
+      setState(() {
+        // Update the UI
+      });
+
     } catch (e) {
       print('Error picking image: $e');
       ScaffoldMessenger.of(context).showSnackBar(

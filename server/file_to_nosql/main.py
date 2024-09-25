@@ -5,6 +5,11 @@ from google.cloud import firestore
 # Initialize Firestore
 db = firestore.Client()
 
+# To deploy:
+# gcloud functions deploy file_to_nosql --runtime python312 --trigger-http --allow-unauthenticated --entry-point main --service-account=286240844421-compute@developer.gserviceaccount.com --gen2
+# To run locally:
+# functions-framework --target main --debug
+
 def extract_text_with_documentai(file_bytes, mime_type):
     # info from: https://console.cloud.google.com/ai/document-ai/locations/us/processors/7cbb0c206b7a5176/details?hl=en&project=puurlee&supportedpurview=project
     project_id = "286240844421" # os.environ.get("GOOGLE_CLOUD_PROJECT")
@@ -86,12 +91,15 @@ def get_text(layout, document):
         response_text += document.text[start_index:end_index]
     return response_text
 
-def structure_data(text):
+def structure_data(text, file_data, mime_type, request):
     # For simplicity, we'll structure the data as a simple dictionary
     structured_data = {
         "timestamp": time.time(),
         "content": text,
-        "summary": text[:200],  # Simple summary example
+        "user_id": request.form.get("user_id"),
+        "raw_bytes": file_data, 
+        "mimetype": mime_type, 
+        # "summary": text[:200],  # Simple summary example
     }
     return structured_data
 
@@ -103,15 +111,18 @@ def insert_into_firestore(data):
 def file_to_nosql(request):
     if request.method == 'POST':
         try:
+            print(request)
             # Read the uploaded file file
-            file_file = request.files['file'].read()
+            file_data = request.files['file'].read()
             mime_type = request.files['file'].mimetype
+            print(f"File is {len(file_data)} bytes" )
+            print(mime_type)
 
             # Extract text using Document AI
-            extracted_text = extract_text_with_documentai(file_file, mime_type)
+            extracted_text = extract_text_with_documentai(file_data, mime_type)
 
             # Structure the data
-            structured_data = structure_data(extracted_text)
+            structured_data = structure_data(extracted_text, file_data, mime_type, request)
 
             # Insert structured data into Firestore
             doc_ref = insert_into_firestore(structured_data)
@@ -119,6 +130,7 @@ def file_to_nosql(request):
             return f"Data inserted successfully with ID: {doc_ref[1].id}", 200
 
         except Exception as e:
+            print(e)
             return f"Error: {str(e)}", 500
 
     return "Invalid request method", 405
