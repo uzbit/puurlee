@@ -54,14 +54,15 @@ class _HomeScreenState extends State<HomeScreen> {
   // }
 
   // Function to make the HTTP request
-  Future<void> _postPostImageToDB() async {
+  Future<void> _postPostFileToDB() async {
     final url = 'https://us-central1-puurlee.cloudfunctions.net/file_to_nosql';
     //final url = 'http://127.0.0.1:8080';
 
     try {
       // Example HTTP POST request
       var request = http.MultipartRequest('POST', Uri.parse(url));
-      request.headers.addAll({'Access-Control-Allow-Origin': '*'});
+
+      // request.headers.addAll({'Access-Control-Allow-Origin': '*'});
       // Check which image data is available and add it to the request
       if (_fileBytes != null) {
 
@@ -88,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }  else {
         // Handle the case where no image is selected
-        print('_postPostImageToDB No image selected.');
+        print('_postPostFileToDB No image selected.');
         return; // Exit the function early
       }
       request.fields['user_id'] = user!.uid;
@@ -164,6 +165,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Function to open the camera using image_picker
   Future<void> _openCamera() async {
+    _pickedFile = null;
+    _fileBytes = null;
+    _fileName = null;
+
     final picker = ImagePicker();
     try {
       if (!kIsWeb){
@@ -184,7 +189,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _fileName = result.files.first.name;
         }
       }
-      _postPostImageToDB();
+      _postPostFileToDB();
       setState(() {
         // Update the UI
       });

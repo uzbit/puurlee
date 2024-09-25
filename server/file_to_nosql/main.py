@@ -20,10 +20,12 @@ db = firestore.Client()
 def upload_to_storage(file, user_id):
     try:
         bucket = storage.bucket()
-        blob = bucket.blob(f'uploads/{user_id}/{file.filename}')
+        location = f'uploads/{user_id}/{file.filename}'
+        blob = bucket.blob(location)
         blob.upload_from_file(file, content_type=file.content_type)
-        download_url = blob.generate_signed_url()
-        return download_url
+        storage_url = f"{bucket}/{location}"
+        
+        return storage_url
     except Exception as e:
         print(f'An error occurred during file upload: {e}')
         return None
@@ -125,12 +127,26 @@ def insert_into_firestore(data):
     return doc_ref
 
 def file_to_nosql(request):
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Max-Age': '3600',
+        }
+        return ('', 204, headers)
+
+    headers = {
+        'Access-Control-Allow-Origin': '*',
+    }
+
     if request.method == 'POST':
         try:
             print(request)
             # Read the uploaded file file
             file = request.files['file']
             file_data = file.read()
+            file.seek(0)
             mime_type = file.mimetype
             
             print(f"File is {len(file_data)} bytes" )
@@ -139,7 +155,7 @@ def file_to_nosql(request):
             # Extract text using Document AI
             extracted_text = extract_text_with_documentai(file_data, mime_type)
 
-            storage_url = "N/A" # upload_to_storage(file, request.files['file'])
+            storage_url = upload_to_storage(file, request.form.get("user_id"))
 
             # Structure the data
             structured_data = structure_data(extracted_text, storage_url, request)
