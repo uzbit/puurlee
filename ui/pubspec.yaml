@@ -35,6 +35,7 @@ dependencies:
   cloud_firestore:
   firebase_database:
   firebase_ui_auth:
+  firebase_storage:
   google_sign_in:
   firebase_ui_oauth_google:
   image_picker:

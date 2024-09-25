@@ -23,54 +23,64 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _fileName;
   final user = FirebaseAuth.instance.currentUser;
 
-
-  /* Function to handle image selection (modify as per your implementation)
-  Future<void> _pickImage() async {
-    // Your code to pick the image and set _pickedFile
-    // For example, using ImagePicker:
-    // final pickedFile = await ImagePicker().getImage(source: ImageSource.gallery);
-    // setState(() {
-    //   _pickedFile = File(pickedFile.path);
-    //   _onImageSelected();
-    // });
-
-    // For demonstration, let's assume _pickedFile is set here
-    setState(() {
-      _pickedFile = File('path/to/your/image.png');
-      _onImageSelected(); // Call the function when image is selected
-    });
-  }
-
-  // Function to be called when an image is selected
-  void _onImageSelected() {
-    if (_pickedFile != null && !_hasSentRequest) {
-      _hasSentRequest = true;
-      _makeHttpRequest();
-    }
-  }*/
+  // Future<String> uploadFileToStorage(Uint8List fileData, String fileName, String userId) async {
+  //   try {
+  //     // Create a reference to the storage location
+  //     FirebaseStorage storage = FirebaseStorage.instance;
+  //     Reference ref = storage.ref().child('uploads/$userId/$fileName');
+  //
+  //     // Upload the file
+  //     UploadTask uploadTask = ref.putData(fileData);
+  //
+  //     // Wait for the upload to complete and get the download URL
+  //     TaskSnapshot snapshot = await uploadTask;
+  //     String downloadURL = await snapshot.ref.getDownloadURL();
+  //     return downloadURL;
+  //   } on FirebaseException catch (e) {
+  //     print('FirebaseException: ${e.message}');
+  //     print('Error code: ${e.code}');
+  //     print('Plugin: ${e.plugin}');
+  //     // Additional handling based on error code
+  //     return "";
+  //   } on http.ClientException catch (e) {
+  //     print('ClientException: ${e.message}');
+  //     // Access inner exception or response
+  //     return "";
+  //   } catch (e, stackTrace) {
+  //     print('General exception: $e');
+  //     print('Stack trace: $stackTrace');
+  //     return "";
+  //   }
+  // }
 
   // Function to make the HTTP request
   Future<void> _postPostImageToDB() async {
-    final url = 'https://us-central1-puurlee.cloudfunctions.net/file_to_nosql'; //'http://127.0.0.1:8080';
-    final userId = user!.uid;
+    final url = 'https://us-central1-puurlee.cloudfunctions.net/file_to_nosql';
+    //final url = 'http://127.0.0.1:8080';
 
     try {
       // Example HTTP POST request
       var request = http.MultipartRequest('POST', Uri.parse(url));
+      request.headers.addAll({'Access-Control-Allow-Origin': '*'});
       // Check which image data is available and add it to the request
       if (_fileBytes != null) {
+
         // Replace with the actual file name if available
         String? mimeType = lookupMimeType(_fileName!);
 
         if (mimeType != null) {
           final mimeTypeData = mimeType.split('/');
-
+          
           request.files.add(http.MultipartFile.fromBytes(
             'file',
             _fileBytes!,
             filename: _fileName,
             contentType: MediaType(mimeTypeData[0], mimeTypeData[1]),
           ));
+
+          // _storageUrl = await uploadFileToStorage(_fileBytes!, _fileName!, user!.uid);
+          // print("Storage url: ${_storageUrl}");
+
         } else {
           // Handle error: could not determine MIME type
           print('Could not determine MIME type of the file.');
@@ -81,7 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
         print('_postPostImageToDB No image selected.');
         return; // Exit the function early
       }
-      request.fields['user_id'] = userId;
+      request.fields['user_id'] = user!.uid;
+      //request.fields['storage_url'] = _storageUrl;
 
       var response = await request.send();
 
@@ -173,7 +184,6 @@ class _HomeScreenState extends State<HomeScreen> {
           _fileName = result.files.first.name;
         }
       }
-
       _postPostImageToDB();
       setState(() {
         // Update the UI

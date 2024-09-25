@@ -1,6 +1,13 @@
 import time
 from google.cloud import documentai_v1 as documentai
 from google.cloud import firestore
+import firebase_admin
+from firebase_admin import storage
+
+# Initialize the Firebase Admin SDK
+firebase_admin.initialize_app(options={
+    'storageBucket': 'puurlee.appspot.com'
+})
 
 # Initialize Firestore
 db = firestore.Client()
@@ -10,6 +17,17 @@ db = firestore.Client()
 # To run locally:
 # functions-framework --target main --debug
 
+def upload_to_storage(file, user_id):
+    try:
+        bucket = storage.bucket()
+        blob = bucket.blob(f'uploads/{user_id}/{file.filename}')
+        blob.upload_from_file(file, content_type=file.content_type)
+        download_url = blob.generate_signed_url()
+        return download_url
+    except Exception as e:
+        print(f'An error occurred during file upload: {e}')
+        return None
+    
 def extract_text_with_documentai(file_bytes, mime_type):
     # info from: https://console.cloud.google.com/ai/document-ai/locations/us/processors/7cbb0c206b7a5176/details?hl=en&project=puurlee&supportedpurview=project
     project_id = "286240844421" # os.environ.get("GOOGLE_CLOUD_PROJECT")
@@ -91,15 +109,13 @@ def get_text(layout, document):
         response_text += document.text[start_index:end_index]
     return response_text
 
-def structure_data(text, file_data, mime_type, request):
+def structure_data(text, storage_url, request):
     # For simplicity, we'll structure the data as a simple dictionary
     structured_data = {
         "timestamp": time.time(),
         "content": text,
         "user_id": request.form.get("user_id"),
-        "raw_bytes": file_data, 
-        "mimetype": mime_type, 
-        # "summary": text[:200],  # Simple summary example
+        "storage_url": storage_url,
     }
     return structured_data
 
@@ -113,16 +129,20 @@ def file_to_nosql(request):
         try:
             print(request)
             # Read the uploaded file file
-            file_data = request.files['file'].read()
-            mime_type = request.files['file'].mimetype
+            file = request.files['file']
+            file_data = file.read()
+            mime_type = file.mimetype
+            
             print(f"File is {len(file_data)} bytes" )
             print(mime_type)
 
             # Extract text using Document AI
             extracted_text = extract_text_with_documentai(file_data, mime_type)
 
+            storage_url = "N/A" # upload_to_storage(file, request.files['file'])
+
             # Structure the data
-            structured_data = structure_data(extracted_text, file_data, mime_type, request)
+            structured_data = structure_data(extracted_text, storage_url, request)
 
             # Insert structured data into Firestore
             doc_ref = insert_into_firestore(structured_data)
