@@ -9,7 +9,7 @@ class ChatMessage {
 }
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({Key? key}) : super(key: key);
+  const ChatScreen({super.key});
 
   @override
   _ChatScreenState createState() => _ChatScreenState();
@@ -56,7 +56,7 @@ class _ChatScreenState extends State<ChatScreen> {
     // Align user messages to the right, AI messages to the left
     final alignment = message.isUser ? Alignment.centerRight : Alignment.centerLeft;
     final bubbleColor = message.isUser ? Colors.blue[100] : Colors.grey[200];
-    final textColor = Colors.black;
+    const textColor = Colors.black;
 
     return Align(
       alignment: alignment,
@@ -69,7 +69,7 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         child: Text(
           message.text,
-          style: TextStyle(color: textColor),
+          style: const TextStyle(color: textColor),
         ),
       ),
     );

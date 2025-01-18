@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "286240844421",
+    "project_id": "puurlee",
+    "storage_bucket": "puurlee.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:286240844421:android:75722b7492e552565617ec",
+        "android_client_info": {
+          "package_name": "com.puurlee.complete"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "286240844421-r7e0me1herkkr8evqjsv5b4pr1nu7o0n.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.puurlee.complete",
+            "certificate_hash": "abea3df316e15e604a4fc6ca53e18cdc40cfa429"
+          }
+        },
+        {
+          "client_id": "286240844421-1di458nniumfamvcqck2mm4n90m29e2p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBO5i_-v8bcBt9EmoQLB-KvZEF4mYWwCVU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "286240844421-1di458nniumfamvcqck2mm4n90m29e2p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

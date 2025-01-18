@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 
 class EnterNameScreen extends StatefulWidget {
+  const EnterNameScreen({super.key});
+
   @override
   _EnterNameScreenState createState() => _EnterNameScreenState();
 }

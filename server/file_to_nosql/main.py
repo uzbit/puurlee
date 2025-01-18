@@ -127,18 +127,16 @@ def insert_into_firestore(data):
     return doc_ref
 
 def file_to_nosql(request):
-    if request.method == 'OPTIONS':
-        headers = {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-            'Access-Control-Max-Age': '3600',
-        }
-        return ('', 204, headers)
-
-    headers = {
-        'Access-Control-Allow-Origin': '*',
+    cors_headers = {
+        'Access-Control-Allow-Origin': '*',           # Or restrict to specific domain
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Max-Age': '3600',
     }
+
+    if request.method == 'OPTIONS':
+        # For preflight requests
+        return ('', 204, cors_headers)
 
     if request.method == 'POST':
         try:
@@ -162,14 +160,15 @@ def file_to_nosql(request):
 
             # Insert structured data into Firestore
             doc_ref = insert_into_firestore(structured_data)
-
-            return f"Data inserted successfully with ID: {doc_ref[1].id}", 200
+            response_body = f"Data inserted successfully with ID: {doc_ref[1].id}"
+            return (response_body, 200, cors_headers)
 
         except Exception as e:
             print(e)
-            return f"Error: {str(e)}", 500
+            response_body = f"Error inserting file data: {e}"
+            return (response_body, 500, cors_headers)
 
-    return "Invalid request method", 405
+    return ("Invalid request method", 405, cors_headers)
 
 # Entry point for Google Cloud Function
 def main(request):

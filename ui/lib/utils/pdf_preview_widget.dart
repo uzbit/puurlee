@@ -5,7 +5,7 @@ import 'dart:typed_data';
 class PdfPreviewWidget extends StatelessWidget {
   final Uint8List pdfData;
 
-  const PdfPreviewWidget({Key? key, required this.pdfData}) : super(key: key);
+  const PdfPreviewWidget({super.key, required this.pdfData});
 
   @override
   Widget build(BuildContext context) {

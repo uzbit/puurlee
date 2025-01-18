@@ -1,4 +1,4 @@
-package com.puurlee.puurlee
+package com.puurlee.complete
 
 import io.flutter.embedding.android.FlutterActivity
 

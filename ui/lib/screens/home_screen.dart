@@ -7,7 +7,7 @@ import 'chat_screen.dart';
 import 'file_upload_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     // If displayName is null, redirect to enter name screen
     if (user != null && user!.displayName == null) {
-      return EnterNameScreen();
+      return const EnterNameScreen();
     }
 
     return Scaffold(

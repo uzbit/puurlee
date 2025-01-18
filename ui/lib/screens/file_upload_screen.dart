@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,7 +10,7 @@ import '../services/file_upload_service.dart';
 import '../utils/pdf_preview_widget.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
-  const DocumentUploadScreen({Key? key}) : super(key: key);
+  const DocumentUploadScreen({super.key});
 
   @override
   _DocumentUploadScreenState createState() => _DocumentUploadScreenState();
@@ -21,6 +20,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   XFile? _pickedFile;
   Uint8List? _fileBytes;
   String? _fileName;
+  final int _maxFileSizeMB = 1;
 
   final user = FirebaseAuth.instance.currentUser;
 
@@ -54,10 +54,13 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         }
       }
 
-      // Optionally upload immediately after picking
-      // if (_fileBytes != null && _fileName != null) {
-      //   await _uploadFile();
-      // }
+      int maxFileSize = _maxFileSizeMB * 1024 * 1024; // 1MB
+
+      if (_fileBytes!.length > maxFileSize){
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('This file is too large, please choose one less than ${_maxFileSizeMB}MB.')),
+        );
+      }
 
       setState(() {});
     } catch (e) {
@@ -75,7 +78,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       return false;
     }
 
-    print("${_fileName}, ${_fileBytes?.length}, ${user}, ${user?.uid}");
+    print("$_fileName, ${_fileBytes?.length}, $user, ${user?.uid}");
 
     try {
       await FileUploadService.postFileToDB(
@@ -83,31 +86,10 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         fileName: _fileName!,
         userId: user?.uid ?? '',
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('File uploaded successfully.')),
-      );
       return true; // Indicate success
     } catch (e) {
       print('Error uploading file: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error uploading file: $e')),
-      );
       return false; // Indicate failure
-    }
-    try {
-      await FileUploadService.postFileToDB(
-        fileBytes: _fileBytes!,
-        fileName: _fileName!,
-        userId: user?.uid ?? '',
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('File uploaded successfully.')),
-      );
-    } catch (e) {
-      print('Error uploading file: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error uploading file: $e')),
-      );
     }
   }
 
@@ -132,7 +114,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         );
       } else {
         // If it’s not an image, just show a generic label
-        previewWidget = Text('Selected file: $_fileName');
+        previewWidget = Text('Selected file: $_fileName is not valid! Must be an image or a PDF.');
       }
     } else {
       previewWidget = const Text('No file selected.');
