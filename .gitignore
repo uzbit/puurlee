@@ -15,6 +15,7 @@ google-services.json
 **/.venv/
 migrate_working_dir/
 ui/lib/options.dart
+server/options.ini
 
 # IntelliJ related
 *.iml

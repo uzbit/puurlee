@@ -1,8 +1,11 @@
+
 import time
+
 from google.cloud import documentai_v1 as documentai
 from google.cloud import firestore
 import firebase_admin
 from firebase_admin import storage
+from utils.Utilities import api_key_required, CORS_HEADERS
 
 # Initialize the Firebase Admin SDK
 firebase_admin.initialize_app(options={
@@ -13,9 +16,9 @@ firebase_admin.initialize_app(options={
 db = firestore.Client()
 
 # To deploy:
-# gcloud functions deploy file_to_nosql --runtime python312 --trigger-http --allow-unauthenticated --entry-point main --service-account=286240844421-compute@developer.gserviceaccount.com --gen2
+# gcloud functions deploy file_to_nosql --runtime python312 --trigger-http --allow-unauthenticated --entry-point main --service-account=286240844421-compute@developer.gserviceaccount.com --gen2 --set-env-vars API_KEY=your-api-key
 # To run locally:
-# functions-framework --target main --debug
+# API_KEY=your-api-key functions-framework --target main --debug
 
 def upload_to_storage(file, user_id):
     bucket = storage.bucket()
@@ -121,17 +124,12 @@ def insert_into_firestore(data):
     doc_ref = db.collection("documents").add(data)
     return doc_ref
 
+@api_key_required
 def file_to_nosql(request):
-    cors_headers = {
-        'Access-Control-Allow-Origin': '*',           # Or restrict to specific domain
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-        'Access-Control-Max-Age': '3600',
-    }
-
+    
     if request.method == 'OPTIONS':
         # For preflight requests
-        return ('', 204, cors_headers)
+        return ('', 204, CORS_HEADERS)
 
     if request.method == 'POST':
         try:
@@ -156,14 +154,14 @@ def file_to_nosql(request):
             # Insert structured data into Firestore
             doc_ref = insert_into_firestore(structured_data)
             response_body = f"Data inserted successfully with ID: {doc_ref[1].id}"
-            return (response_body, 200, cors_headers)
+            return (response_body, 200, CORS_HEADERS)
 
         except Exception as e:
             print("ERROR:", e)
             response_body = f"Error inserting file data."
-            return (response_body, 500, cors_headers)
+            return (response_body, 500, CORS_HEADERS)
 
-    return ("Invalid request method", 405, cors_headers)
+    return ("Invalid request method", 405, CORS_HEADERS)
 
 # Entry point for Google Cloud Function
 def main(request):
