@@ -1,0 +1,64 @@
+import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+class CustomProfileScreen extends StatefulWidget {
+  const CustomProfileScreen({super.key});
+
+  @override
+  _CustomProfileScreen createState() => _CustomProfileScreen();
+}
+
+class _CustomProfileScreen extends State<CustomProfileScreen> {
+  static const String _clearUserDataUrl =
+      //'https://us-central1-puurlee.cloudfunctions.net/file_to_nosql';
+      'http://127.0.0.1:8080';
+  final user = FirebaseAuth.instance.currentUser;
+
+  // 2. Upload the file to your backend
+  Future<bool> _clearUserData() async {
+    try {
+      var request = http.MultipartRequest('POST', Uri.parse(_clearUserDataUrl));
+      request.fields['user_id'] = user!.uid;
+
+      var response = await request.send();
+
+      if (response.statusCode == 200) {
+        print('Cleared user data successfully.');
+        return true;
+      } else {
+        print('Clearing user data failed with status: ${response.statusCode}.');
+        return false;
+      }
+    } catch (e) {
+      print('An error occurred while uploading file: $e');
+      return false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ProfileScreen(
+      // The actions property lets you add custom items
+      // like sign-out or other settings
+      actions: [
+        SignedOutAction((context) {
+          Navigator.of(context).pop(); // or some other flow
+        }),
+      ],
+
+      // children allows you to insert extra widgets
+      // into the bottom of the profile screen
+      children: [
+        // For example, an ElevatedButton that calls some custom function
+        ElevatedButton(
+          onPressed: () {
+            _clearUserData();
+          },
+          child: const Text('Clear all personal data.'),
+        ),
+      ],
+    );
+  }
+}

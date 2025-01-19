@@ -35,7 +35,12 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       if (!kIsWeb) {
         // On mobile, let’s pick from camera or gallery
         // (you can adjust to always use camera or always use gallery, etc.)
-        _pickedFile = await picker.pickImage(source: ImageSource.camera);
+        _pickedFile = await picker.pickImage(
+            source: ImageSource.camera,
+            maxWidth: 1600,
+            maxHeight: 1200,
+            imageQuality: 85,   // JPEG quality: 0 to 100 (lower = smaller file size)
+        );
         if (_pickedFile != null) {
           _fileBytes = await _pickedFile!.readAsBytes();
           _fileName = _pickedFile!.name;
@@ -54,14 +59,6 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         }
       }
 
-      int maxFileSize = _maxFileSizeMB * 1024 * 1024; // 1MB
-
-      if (_fileBytes!.length > maxFileSize){
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('This file is too large, please choose one less than ${_maxFileSizeMB}MB.')),
-        );
-      }
-
       setState(() {});
     } catch (e) {
       print('Error picking file: $e');
@@ -75,6 +72,14 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   Future<bool> _uploadFile() async {
     if (_fileBytes == null || _fileName == null) {
       print('No file to upload.');
+      return false;
+    }
+
+    int maxFileSize = _maxFileSizeMB * 1024 * 1024; // 1MB
+    if (_fileBytes!.length > maxFileSize){
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('This file is too large, please choose one less than ${_maxFileSizeMB}MB.')),
+      );
       return false;
     }
 

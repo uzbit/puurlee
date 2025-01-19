@@ -18,17 +18,12 @@ db = firestore.Client()
 # functions-framework --target main --debug
 
 def upload_to_storage(file, user_id):
-    try:
-        bucket = storage.bucket()
-        location = f'uploads/{user_id}/{file.filename}'
-        blob = bucket.blob(location)
-        blob.upload_from_file(file, content_type=file.content_type)
-        storage_url = f"{bucket}/{location}"
-        
-        return storage_url
-    except Exception as e:
-        print(f'An error occurred during file upload: {e}')
-        return None
+    bucket = storage.bucket()
+    location = f'uploads/{user_id}/{file.filename}'
+    blob = bucket.blob(location)
+    blob.upload_from_file(file, content_type=file.content_type)
+    storage_url = f"{bucket}/{location}" 
+    return storage_url
     
 def extract_text_with_documentai(file_bytes, mime_type):
     # info from: https://console.cloud.google.com/ai/document-ai/locations/us/processors/7cbb0c206b7a5176/details?hl=en&project=puurlee&supportedpurview=project
@@ -164,8 +159,8 @@ def file_to_nosql(request):
             return (response_body, 200, cors_headers)
 
         except Exception as e:
-            print(e)
-            response_body = f"Error inserting file data: {e}"
+            print("ERROR:", e)
+            response_body = f"Error inserting file data."
             return (response_body, 500, cors_headers)
 
     return ("Invalid request method", 405, cors_headers)

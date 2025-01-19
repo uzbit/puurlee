@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 
 import 'enter_name_screen.dart';
 import 'chat_screen.dart';
 import 'file_upload_screen.dart';
+import 'custom_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,8 +43,8 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute<ProfileScreen>(
-                  builder: (context) => const ProfileScreen(),
+                MaterialPageRoute<CustomProfileScreen>(
+                  builder: (context) => const CustomProfileScreen(),
                 ),
               );
             },
