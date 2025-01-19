@@ -1,0 +1,4 @@
+firebase-admin
+google-cloud
+google-cloud-firestore
+google-cloud-documentai
