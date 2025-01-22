@@ -1,7 +1,11 @@
 
 import time
+import csv
+import pytesseract
+from io import BytesIO, StringIO
+from PIL import Image
+from pdf2image import convert_from_bytes
 
-from google.cloud import documentai_v1 as documentai
 from google.cloud import firestore
 import firebase_admin
 from firebase_admin import storage
@@ -15,6 +19,19 @@ firebase_admin.initialize_app(options={
 # Initialize Firestore
 db = firestore.Client()
 
+# To build docker container:
+# From root
+# docker build -f file_to_nosql/Dockerfile -t file_to_nosql .
+
+# To run docker container:
+# From root
+# docker run -v ./service_account.json:/app/service_account.json:ro -e GOOGLE_APPLICATION_CREDENTIALS="/app/service_account.json" -p 8080:8080 file_to_nosql
+
+# To call service:
+# curl -X POST \
+#   -F file=@test/jpg/page1.jpg \
+#   http://localhost:8080
+
 # To deploy:
 # gcloud functions deploy file_to_nosql --runtime python312 --trigger-http --allow-unauthenticated --entry-point main --service-account=286240844421-compute@developer.gserviceaccount.com --gen2 --set-env-vars API_KEY=your-api-key
 # To run locally:
@@ -27,88 +44,79 @@ def upload_to_storage(file, user_id):
     blob.upload_from_file(file, content_type=file.content_type)
     storage_url = f"{bucket}/{location}" 
     return storage_url
+
+
+def extract_table_data_tesseract_from_bytes(image_data):
+    """
+    Performs OCR on the given image bytes using Tesseract in TSV mode (PSM 6),
+    reads the output, and groups text by line.
+    Returns a list of lines, where each line is a concatenation of
+    (left-sorted) text tokens.
+    """
+
+    # 1. Convert the raw image bytes into a PIL Image
+    img = Image.open(BytesIO(image_data))
+
+    # 2. Run Tesseract in TSV mode directly in memory
+    #    --psm 6 is often good for block/column text
+    tsv_data = pytesseract.image_to_data(
+        img,
+        config="--psm 6",
+        output_type=pytesseract.Output.STRING,
+    )
+
+    # 3. Parse the TSV data
+    lines_data = {}  # line_num -> list of (left, text)
+    tsv_io = StringIO(tsv_data)
+    reader = csv.DictReader(tsv_io, delimiter="\t", quoting=csv.QUOTE_NONE)
+
+    # Tesseract TSV columns (typical for Tesseract 4+):
+    # level, page_num, block_num, par_num, line_num,
+    # word_num, left, top, width, height, conf, text
+    for row in reader:
+        # Skip rows that aren't level=5 (word level)
+        if row["level"] != "5":
+            continue
+        text = row["text"].strip()
+        if not text:
+            continue
+
+        line_num = int(row["line_num"])
+        left = int(row["left"])
+
+        if line_num not in lines_data:
+            lines_data[line_num] = []
+
+        # Collect (left, text) so we can sort tokens left-to-right if needed
+        lines_data[line_num].append((left, text))
+
+    # 4. Build an output structure
+    #    Sort each line’s tokens by the left coordinate
+    extracted_lines = []
+    for line_num in sorted(lines_data.keys()):
+        tokens_in_line = sorted(lines_data[line_num], key=lambda x: x[0])
+        line_text = " ".join(token[1] for token in tokens_in_line)
+        extracted_lines.append(line_text)
+
+    return extracted_lines
+
+# def convert_to_html_with_formatting(text):
+#     """
+#     Convert extracted text to basic HTML format with paragraphs and line breaks.
+#     """
+#     # Escape any HTML special characters (optional)
+#     escaped_text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+#     # Replace line breaks with HTML <br> and paragraphs with <p> tags
+#     html_content = "<html><body>"
+#     paragraphs = escaped_text.split("\n\n")  # Assume paragraphs are separated by double line breaks
+#     for paragraph in paragraphs:
+#         if paragraph.strip():  # Only wrap non-empty paragraphs
+#             html_content += f"<p>{paragraph.replace('\n', '<br>')}</p>"
+#     html_content += "</body></html>"
+
+#     return html_content
     
-def extract_text_with_documentai(file_bytes, mime_type):
-    # info from: https://console.cloud.google.com/ai/document-ai/locations/us/processors/7cbb0c206b7a5176/details?hl=en&project=puurlee&supportedpurview=project
-    project_id = "286240844421" # os.environ.get("GOOGLE_CLOUD_PROJECT")
-    location = 'us'  # Format is 'us' or 'eu'
-    processor_id = "7cbb0c206b7a5176"
-
-    client = documentai.DocumentProcessorServiceClient()
-
-    name = f'projects/{project_id}/locations/{location}/processors/{processor_id}'
-
-     # Read the file file into memory
-    raw_document = documentai.RawDocument(content=file_bytes, mime_type=mime_type)
-
-    # Configure the process request
-    request = documentai.ProcessRequest(name=name, raw_document=raw_document)
-
-    # Process the document
-    result = client.process_document(request=request)
-
-    # Extract the text from the document
-    document = result.document
-    
-    html_content = convert_to_html_with_formatting(extract_text_with_layout(document))
-
-    return html_content
-
-
-def extract_text_with_layout(document):
-    """
-    Extracts text from the Document AI response, while preserving layout information.
-    """
-    text = document.text
-    
-    # Iterate over each page in the document
-    layout_text = []
-    for page in document.pages:
-        page_text = []
-        for paragraph in page.paragraphs:
-            paragraph_text = []
-            for line in paragraph.layout.text_anchor.text_segments:
-                line_text = text[line.start_index:line.end_index]
-                paragraph_text.append(line_text)
-            
-            # Join paragraph text and add it to the page text
-            page_text.append(" ".join(paragraph_text))
-        
-        # Join page text and add it to the layout text
-        layout_text.append("\n".join(page_text))
-
-    # Join all pages' text
-    full_text = "\n\n".join(layout_text)
-    return full_text
-
-def convert_to_html_with_formatting(text):
-    """
-    Convert extracted text to basic HTML format with paragraphs and line breaks.
-    """
-    # Escape any HTML special characters (optional)
-    escaped_text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
-    # Replace line breaks with HTML <br> and paragraphs with <p> tags
-    html_content = "<html><body>"
-    paragraphs = escaped_text.split("\n\n")  # Assume paragraphs are separated by double line breaks
-    for paragraph in paragraphs:
-        if paragraph.strip():  # Only wrap non-empty paragraphs
-            html_content += f"<p>{paragraph.replace('\n', '<br>')}</p>"
-    html_content += "</body></html>"
-
-    return html_content
-
-def get_text(layout, document):
-    """
-    Helper function to extract text given a layout and document object
-    """
-    response_text = ''
-    for segment in layout.text_anchor.text_segments:
-        start_index = int(segment.start_index)
-        end_index = int(segment.end_index)
-        response_text += document.text[start_index:end_index]
-    return response_text
-
 def structure_data(text, storage_url, request):
     # For simplicity, we'll structure the data as a simple dictionary
     structured_data = {
@@ -140,11 +148,16 @@ def file_to_nosql(request):
             file.seek(0)
             mime_type = file.mimetype
             
-            print(f"File is {len(file_data)} bytes" )
+            print(f"File is {len(file_data)} bytes and type: {mime_type}" )
             print(mime_type)
 
-            # Extract text using Document AI
-            extracted_text = extract_text_with_documentai(file_data, mime_type)
+            extracted_text = []
+            if mime_type == "application/pdf":
+                pages = convert_from_bytes(file_data)
+                for i, page_data in enumerate(pages, start=1):
+                    extracted_text += extract_table_data_tesseract_from_bytes(page_data)
+            else:        
+                extracted_text = extract_table_data_tesseract_from_bytes(file_data)
 
             storage_url = upload_to_storage(file, request.form.get("user_id"))
 

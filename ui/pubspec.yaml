@@ -43,6 +43,7 @@ dependencies:
   mime:
   pdfx:
   image:
+  auto_size_text:
 
 
 

@@ -52,7 +52,7 @@ class _GlobalLoadingWidgetState extends State<GlobalLoadingWidget> {
         if (_isLoading)
           Positioned.fill(
             child: Container(
-              color: Colors.black54,
+              color: Colors.black26,
               child: const Center(
                 child: CircularProgressIndicator(),
               ),

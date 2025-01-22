@@ -5,6 +5,7 @@
 *.swp
 *.pdf
 *.lock
+service_account.json
 google-services.json
 .DS_Store
 .atom/

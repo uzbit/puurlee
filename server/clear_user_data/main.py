@@ -5,9 +5,7 @@ from firebase_admin import storage
 from utils.Utilities import api_key_required, CORS_HEADERS
 
 # Initialize the Firebase Admin SDK
-firebase_admin.initialize_app(options={
-    'storageBucket': 'puurlee.appspot.com'
-})
+firebase_admin.initialize_app(options={"storageBucket": "puurlee.appspot.com"})
 
 # Initialize Firestore
 db = firestore.Client()
@@ -17,9 +15,10 @@ db = firestore.Client()
 # To run locally:
 # API_KEY=your-api-key functions-framework --target main --debug
 
+
 def clear_storage(user_id):
     bucket = storage.bucket()
-    location = f'uploads/{user_id}/'
+    location = f"uploads/{user_id}/"
     blob = bucket.blob(location)
     blobs = bucket.list_blobs(prefix=location)
 
@@ -27,6 +26,7 @@ def clear_storage(user_id):
     for blob in blobs:
         print(f"Deleting {blob.name}")
         blob.delete()
+
 
 def clear_firestore(user_id):
     # Query all documents with matching user_id
@@ -39,13 +39,14 @@ def clear_firestore(user_id):
 
     print(f"Deleted {delete_count} documents for user_id '{user_id}'.")
 
+
 @api_key_required
 def clear_user_data(request):
-    if request.method == 'OPTIONS':
+    if request.method == "OPTIONS":
         # For preflight requests
-        return ('', 204, CORS_HEADERS)
+        return ("", 204, CORS_HEADERS)
 
-    if request.method == 'POST':
+    if request.method == "POST":
         try:
             user_id = request.form.get("user_id")
             clear_storage(user_id)
@@ -60,8 +61,7 @@ def clear_user_data(request):
 
     return ("Invalid request method", 405, CORS_HEADERS)
 
+
 # Entry point for Google Cloud Function
 def main(request):
     return clear_user_data(request)
-
-

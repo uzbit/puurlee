@@ -1,4 +1,7 @@
 firebase-admin
 google-cloud
 google-cloud-firestore
-google-cloud-documentai
+pytesseract
+functions-framework
+pillow
+pdf2image

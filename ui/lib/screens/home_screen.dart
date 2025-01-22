@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:auto_size_text/auto_size_text.dart';
 import 'enter_name_screen.dart';
 import 'chat_screen.dart';
 import 'file_upload_screen.dart';
@@ -59,9 +59,13 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset('assets/images/puurlee_logo.png'),
-              Text(
-                'Welcome ${user?.displayName ?? "You"}!',
+              AutoSizeText(
+                'Hi ${user?.displayName ?? "You"}!',
                 style: Theme.of(context).textTheme.displaySmall,
+                textAlign: TextAlign.center,
+                maxLines: 1, // Only one line; the text will shrink if it's too long
+                minFontSize: 12, // The smallest font size allowed
+                overflow: TextOverflow.ellipsis, // If it still doesn't fit
               ),
               const SizedBox(height: 20),
               const Text('Use the + button to upload documents.'),
