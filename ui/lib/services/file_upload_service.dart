@@ -7,7 +7,7 @@ import '../options.dart';
 
 class FileUploadService {
   static const String _uploadUrl =
-      'https://us-central1-puurlee.cloudfunctions.net/file_to_nosql';
+      'https://file-to-nosql-286240844421.us-central1.run.app';
   // static const String _uploadUrl = 'http://127.0.0.1:8080';
 
   static Future<void> postFileToDB({
@@ -41,6 +41,7 @@ class FileUploadService {
       request.fields['api_key'] = puurleeServerAPIKey;
 
       GlobalLoadingWidget.show();
+      print("${mimeType}, ${request.fields}");
 
       var response = await request.send();
 

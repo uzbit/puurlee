@@ -113,9 +113,10 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
             : Image.file(File(_pickedFile!.path));
       } else if (_fileName!.toLowerCase().endsWith('.pdf')) {
         // Use a PDF viewer
+        final pdfData = Uint8List.fromList(_fileBytes!);
         previewWidget = SizedBox(
           height: 400,
-          child: PdfPreviewWidget(pdfData: _fileBytes!),
+          child: PdfPreviewWidget(pdfData: pdfData),
         );
       } else {
         // If it’s not an image, just show a generic label
