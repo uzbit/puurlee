@@ -10,17 +10,12 @@ import firebase_admin
 from firebase_admin import storage
 from utils.Utilities import api_key_required, CORS_HEADERS
 
-# Initialize the Firebase Admin SDK
-firebase_admin.initialize_app(options={"storageBucket": "puurlee.appspot.com"})
-
-# Initialize Firestore
-db = firestore.Client()
-
 # To build docker container:
 # From root
 # docker build -f file_to_nosql/Dockerfile -t file_to_nosql .
 
-# To push docker to GC:
+# To push docker to GC
+# From server
 # gcloud auth configure-docker us-central1-docker.pkg.dev
 # docker build --platform=linux/amd64 -f file_to_nosql/Dockerfile -t gcr.io/puurlee/file_to_nosql .
 # docker push gcr.io/puurlee/file_to_nosql
@@ -36,10 +31,17 @@ db = firestore.Client()
 #   https://file-to-nosql-286240844421.us-central1.run.app
 # http://localhost:8080
 
-# To deploy:
-# gcloud functions deploy file_to_nosql --set-env-vars API_KEY=your-api-key --gen2 --region=us-central1 --runtime=custom --trigger-http --allow-unauthenticated --entry-point=main --service-account=286240844421-compute@developer.gserviceaccount.com  --docker-repository=projects/puurlee/locations/us-central1/repositories/gcf-artifacts
+# To deploy (NOT WORKING, user UI: https://console.cloud.google.com/run/detail/us-central1/)
+# gcloud functions deploy file_to_nosql --docker-repository=us-central1-docker.pkg.dev/puurlee/file_to_nosql --gen2 --trigger-http --allow-unauthenticated --service-account=286240844421-compute@developer.gserviceaccount.com  --source="gcr.io/puurlee/file_to_nosql:latest"
 # To run locally:
-# API_KEY=your-api-key functions-framework --target main --debug
+# functions-framework --target main --debug
+
+
+# Initialize the Firebase Admin SDK
+# firebase_admin.initialize_app(options={"storageBucket": "puurlee.appspot.com"})
+
+# Initialize Firestore
+db = firestore.Client()
 
 
 def upload_to_storage(file, user_id):
@@ -124,12 +126,12 @@ def extract_table_data_tesseract_from_bytes(image_data):
 #     return html_content
 
 
-def structure_data(text, storage_url, request):
+def structure_data(text, storage_url, user_id):
     # For simplicity, we'll structure the data as a simple dictionary
     structured_data = {
         "timestamp": time.time(),
         "content": text,
-        "user_id": request.form.get("user_id"),
+        "user_id": user_id,
         "storage_url": storage_url,
     }
     return structured_data
@@ -141,59 +143,57 @@ def insert_into_firestore(data):
     return doc_ref
 
 
+def file_to_nosql(file, user_id):
+    try:
+        # Read the uploaded file file
+        file_data = file.read()
+        file.seek(0)
+        mime_type = file.mimetype
+
+        print(f"File is {len(file_data)} bytes and type: {mime_type}")
+        print(mime_type)
+
+        extracted_text = []
+        if mime_type == "application/pdf":
+            pages = convert_from_bytes(file_data)
+            for i, page in enumerate(pages, start=1):
+                # 1) Create an in-memory buffer
+                buffered = BytesIO()
+
+                # 2) Save the PIL image to that buffer in some format (PNG, JPEG, etc.)
+                page.save(buffered, format="PNG")
+
+                # 3) Retrieve the raw bytes
+                page_data = buffered.getvalue()
+
+                extracted_text += extract_table_data_tesseract_from_bytes(page_data)
+        else:
+            extracted_text = extract_table_data_tesseract_from_bytes(file_data)
+
+        storage_url = upload_to_storage(file, user_id)
+
+        # Structure the data
+        structured_data = structure_data(extracted_text, storage_url, user_id)
+
+        # Insert structured data into Firestore
+        doc_ref = insert_into_firestore(structured_data)
+        response_body = f"Data inserted successfully with ID: {doc_ref[1].id}"
+        return (response_body, 200, CORS_HEADERS)
+
+    except Exception as e:
+        print("ERROR:", e)
+        response_body = f"Error inserting file data. {e}"
+        return (response_body, 500, CORS_HEADERS)
+
+
+# Entry point for Google Cloud Function
 @api_key_required
-def file_to_nosql(request):
+def main(request):
     if request.method == "OPTIONS":
         # For preflight requests
         return ("", 204, CORS_HEADERS)
 
     if request.method == "POST":
-        try:
-            print(request)
-            # Read the uploaded file file
-            file = request.files["file"]
-            file_data = file.read()
-            file.seek(0)
-            mime_type = file.mimetype
-
-            print(f"File is {len(file_data)} bytes and type: {mime_type}")
-            print(mime_type)
-
-            extracted_text = []
-            if mime_type == "application/pdf":
-                pages = convert_from_bytes(file_data)
-                for i, page in enumerate(pages, start=1):
-                    # 1) Create an in-memory buffer
-                    buffered = BytesIO()
-
-                    # 2) Save the PIL image to that buffer in some format (PNG, JPEG, etc.)
-                    page.save(buffered, format="PNG")
-
-                    # 3) Retrieve the raw bytes
-                    page_data = buffered.getvalue()
-
-                    extracted_text += extract_table_data_tesseract_from_bytes(page_data)
-            else:
-                extracted_text = extract_table_data_tesseract_from_bytes(file_data)
-
-            storage_url = upload_to_storage(file, request.form.get("user_id"))
-
-            # Structure the data
-            structured_data = structure_data(extracted_text, storage_url, request)
-
-            # Insert structured data into Firestore
-            doc_ref = insert_into_firestore(structured_data)
-            response_body = f"Data inserted successfully with ID: {doc_ref[1].id}"
-            return (response_body, 200, CORS_HEADERS)
-
-        except Exception as e:
-            print("ERROR:", e)
-            response_body = f"Error inserting file data. {e}"
-            return (response_body, 500, CORS_HEADERS)
-
-    return ("Invalid request method", 405, CORS_HEADERS)
-
-
-# Entry point for Google Cloud Function
-def main(request):
-    return file_to_nosql(request)
+        file = request.files["file"]
+        user_id = request.form.get("user_id")
+        return file_to_nosql(file, user_id)

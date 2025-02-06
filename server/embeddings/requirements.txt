@@ -1,4 +1,5 @@
 firebase-admin
 google-cloud
 google-cloud-firestore
-functions-framework
+pinecone
+openai

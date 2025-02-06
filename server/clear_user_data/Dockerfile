@@ -1,14 +1,14 @@
 # Use an official Python runtime as a parent image
 FROM python:3.10-slim
 
-# Install Tesseract and any libraries you need
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    tesseract-ocr \
-    libtesseract-dev \
-    libleptonica-dev \
-    pkg-config \
-    poppler-utils \
-    && rm -rf /var/lib/apt/lists/*
+# # Install Tesseract and any libraries you need
+# RUN apt-get update && apt-get install -y --no-install-recommends \
+#     tesseract-ocr \
+#     libtesseract-dev \
+#     libleptonica-dev \
+#     pkg-config \
+#     poppler-utils \
+#     && rm -rf /var/lib/apt/lists/*
 
 # Create a working directory
 WORKDIR /app
@@ -16,7 +16,7 @@ WORKDIR /app
 # Copy requirements and install them (if you have dependencies)
 
 # Copy in your function code
-COPY file_to_nosql/ /app
+COPY clear_user_data/ /app
 COPY utils /app/utils
 COPY options.ini /app
 RUN pip install --no-cache-dir -r /app/requirements.txt

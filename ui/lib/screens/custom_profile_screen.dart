@@ -14,8 +14,8 @@ class CustomProfileScreen extends StatefulWidget {
 
 class _CustomProfileScreen extends State<CustomProfileScreen> {
   static const String _clearUserDataUrl =
-      //'https://us-central1-puurlee.cloudfunctions.net/file_to_nosql';
-      'http://127.0.0.1:8080';
+      'https://clear-user-data-286240844421.us-central1.run.app';
+      //'http://127.0.0.1:8080';
   final user = FirebaseAuth.instance.currentUser;
 
   //Clear all user data.
