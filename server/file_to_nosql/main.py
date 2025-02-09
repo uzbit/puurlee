@@ -1,14 +1,16 @@
-import time
 import csv
+import json
 import pytesseract
+from datetime import datetime
 from io import BytesIO, StringIO
 from PIL import Image
 from pdf2image import convert_from_bytes
+from google.cloud import tasks_v2
 
 from google.cloud import firestore
 import firebase_admin
 from firebase_admin import storage
-from utils.Utilities import api_key_required, CORS_HEADERS
+from utils.Utilities import api_key_required, CORS_HEADERS, PROJECT_ID
 
 # To build docker container:
 # From root
@@ -16,7 +18,7 @@ from utils.Utilities import api_key_required, CORS_HEADERS
 
 # To push docker to GC
 # From server
-# gcloud auth configure-docker us-central1-docker.pkg.dev
+# # one time: gcloud auth configure-docker us-central1-docker.pkg.dev
 # docker build --platform=linux/amd64 -f file_to_nosql/Dockerfile -t gcr.io/puurlee/file_to_nosql .
 # docker push gcr.io/puurlee/file_to_nosql
 
@@ -38,7 +40,7 @@ from utils.Utilities import api_key_required, CORS_HEADERS
 
 
 # Initialize the Firebase Admin SDK
-# firebase_admin.initialize_app(options={"storageBucket": "puurlee.appspot.com"})
+firebase_admin.initialize_app(options={"storageBucket": "puurlee.appspot.com"})
 
 # Initialize Firestore
 db = firestore.Client()
@@ -127,9 +129,9 @@ def extract_table_data_tesseract_from_bytes(image_data):
 
 
 def structure_data(text, storage_url, user_id):
-    # For simplicity, we'll structure the data as a simple dictionary
+    timestamp = datetime.now(datetime.timezone.utc)
     structured_data = {
-        "timestamp": time.time(),
+        "timestamp": timestamp.timestamp(),
         "content": text,
         "user_id": user_id,
         "storage_url": storage_url,
@@ -141,6 +143,26 @@ def insert_into_firestore(data):
     # Insert the structured data into Firestore
     doc_ref = db.collection("documents").add(data)
     return doc_ref
+
+
+def enqueue_embeddings_task(doc_id):
+    client = tasks_v2.CloudTasksClient()
+    queue = "embeddings-queue"
+    location = "us-central1"
+
+    parent = client.queue_path(PROJECT_ID, location, queue)
+    task_data = {"doc_id": doc_id}
+    task = {
+        "http_request": {
+            "http_method": tasks_v2.HttpMethod.POST,
+            "url": "https://embeddings-286240844421.us-central1.run.app",
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps(task_data).encode(),
+        }
+    }
+
+    response = client.create_task(parent=parent, task=task)
+    print(f"Created task {response.name}")
 
 
 def file_to_nosql(file, user_id):
@@ -177,7 +199,12 @@ def file_to_nosql(file, user_id):
 
         # Insert structured data into Firestore
         doc_ref = insert_into_firestore(structured_data)
-        response_body = f"Data inserted successfully with ID: {doc_ref[1].id}"
+        doc_id = doc_ref[1].id
+        response_body = f"Data inserted successfully with ID: {doc_id}"
+        print(response_body)
+
+        enqueue_embeddings_task(doc_id)
+
         return (response_body, 200, CORS_HEADERS)
 
     except Exception as e:

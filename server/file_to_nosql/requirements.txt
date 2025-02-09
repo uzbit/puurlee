@@ -1,6 +1,7 @@
 firebase-admin
 google-cloud
 google-cloud-firestore
+google-cloud-tasks
 pytesseract
 functions-framework
 pillow

@@ -12,9 +12,10 @@ CORS_HEADERS = {
 
 config = configparser.ConfigParser()
 config.read(Path(__file__).parent.parent / "options.ini")
-PUURLEE_API_KEY = config["Puurlee"]["apikey"]
-OPENAI_API_KEY = config["OpenAI"]["apikey"]
-PINECONE_API_KEY = config["Pinecone"]["apikey"]
+PUURLEE_API_KEY = config["Puurlee"]["api_key"]
+PROJECT_ID = config["Puurlee"]["project_id"]
+OPENAI_API_KEY = config["OpenAI"]["api_key"]
+PINECONE_API_KEY = config["Pinecone"]["api_key"]
 
 
 def api_key_required(f):

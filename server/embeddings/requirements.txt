@@ -1,4 +1,4 @@
-firebase-admin
+functions-framework
 google-cloud
 google-cloud-firestore
 pinecone
