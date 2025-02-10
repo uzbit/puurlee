@@ -4,7 +4,14 @@ from pinecone import Pinecone
 from google.cloud import firestore
 
 from utils.Utilities import OPENAI_API_KEY, PINECONE_API_KEY
-from utils.Utilities import api_key_required, CORS_HEADERS
+from utils.Utilities import api_key_required, embed_text, CORS_HEADERS
+
+# To call service:
+# curl -X POST \
+#   -F "api_key=key" \
+#   -F "doc_id=Akyc7QWwIbVk8rxrKaaT"
+# http://localhost:8080
+#   https://embeddings-286240844421.us-central1.run.app
 
 PINECONE_INDEX = "puurlee-test"
 
@@ -15,7 +22,7 @@ oa = OpenAI(api_key=OPENAI_API_KEY)
 pc = Pinecone(api_key=PINECONE_API_KEY)
 
 
-def chunk_text(text, target_size=500):
+def chunk_lines(lines, num_lines=10):
     def divide_number(X, N):
         base_size = X // N  # Base size for each part
         remainder = X % N  # Extra units to distribute
@@ -31,22 +38,12 @@ def chunk_text(text, target_size=500):
 
         return parts
 
-    chunk_sizes = divide_number(len(text), target_size)
+    chunk_sizes = divide_number(len(lines), num_lines)
     start = 0
     for c in chunk_sizes:
-        end = min(start + c, len(text))
-        yield text[start:end]
+        end = min(start + c, len(lines))
+        yield lines[start:end]
         start = end
-
-
-def get_openai_embedding(chunk):
-    """
-    Calls OpenAI's text-embedding-ada-002 model
-    and returns the 1536-dimensional vector.
-    """
-    response = oa.embeddings.create(model="text-embedding-ada-002", input=chunk)
-    # The actual embedding vector is in response["data"][0]["embedding"]
-    return response.data[0].embedding
 
 
 def store_embeddings_in_pinecone(embeddings, user_id, doc_id):
@@ -88,16 +85,14 @@ def create_embeddings(doc_id):
     else:
         raise Exception("No such document")
 
-    text = "\n".join(doc_data["content"])
     user_id = doc_data["user_id"]
-
     # print(text)
     # print(f"^^^^ {doc_id} ^^^^")
 
     chunk_embeddings = list()
     timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
-    for c in chunk_text(text):
-        e = get_openai_embedding(c)
+    for c in chunk_lines(doc_data["content"]):
+        e = embed_text(oa, c)
         chunk_embeddings.append({"chunk": c, "vector": e, "timestamp": timestamp})
 
     return chunk_embeddings, user_id

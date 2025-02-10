@@ -4,7 +4,7 @@ from embeddings.main import create_embeddings, store_embeddings_in_pinecone
 
 class TestEmbeddings(unittest.TestCase):
     def setUp(self):
-        self.test_doc_id = "Akyc7QWwIbVk8rxrKaaT"
+        self.test_doc_id = "g82ryS54hvY9MfzRzJyE"
 
     def test_create_embeddings(self):
         embeddings, user_id = create_embeddings(self.test_doc_id)

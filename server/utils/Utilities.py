@@ -18,6 +18,12 @@ OPENAI_API_KEY = config["OpenAI"]["api_key"]
 PINECONE_API_KEY = config["Pinecone"]["api_key"]
 
 
+def embed_text(oa, text):
+    """Get embedding vector for a text using OpenAI Embeddings."""
+    response = oa.embeddings.create(model="text-embedding-ada-002", input=text)
+    return response.data[0].embedding
+
+
 def api_key_required(f):
     @wraps(f)
     def decorated_function(request, *args, **kwargs):

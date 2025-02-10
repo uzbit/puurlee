@@ -1,7 +1,7 @@
 import csv
 import json
 import pytesseract
-from datetime import datetime
+import datetime
 from io import BytesIO, StringIO
 from PIL import Image
 from pdf2image import convert_from_bytes
@@ -10,7 +10,7 @@ from google.cloud import tasks_v2
 from google.cloud import firestore
 import firebase_admin
 from firebase_admin import storage
-from utils.Utilities import api_key_required, CORS_HEADERS, PROJECT_ID
+from utils.Utilities import api_key_required, CORS_HEADERS, PUURLEE_API_KEY
 
 # To build docker container:
 # From root
@@ -38,6 +38,8 @@ from utils.Utilities import api_key_required, CORS_HEADERS, PROJECT_ID
 # To run locally:
 # functions-framework --target main --debug
 
+# Task Queue:
+#  gcloud projects add-iam-policy-binding 286240844421 --member="serviceAccount:286240844421-compute@developer.gserviceaccount.com" --role="roles/run.invoker"
 
 # Initialize the Firebase Admin SDK
 firebase_admin.initialize_app(options={"storageBucket": "puurlee.appspot.com"})
@@ -129,9 +131,9 @@ def extract_table_data_tesseract_from_bytes(image_data):
 
 
 def structure_data(text, storage_url, user_id):
-    timestamp = datetime.now(datetime.timezone.utc)
+    timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
     structured_data = {
-        "timestamp": timestamp.timestamp(),
+        "timestamp": timestamp,
         "content": text,
         "user_id": user_id,
         "storage_url": storage_url,
@@ -150,14 +152,17 @@ def enqueue_embeddings_task(doc_id):
     queue = "embeddings-queue"
     location = "us-central1"
 
-    parent = client.queue_path(PROJECT_ID, location, queue)
-    task_data = {"doc_id": doc_id}
+    parent = client.queue_path("puurlee", location, queue)
+    task_data = {"doc_id": doc_id, "api_key": PUURLEE_API_KEY}
     task = {
         "http_request": {
             "http_method": tasks_v2.HttpMethod.POST,
             "url": "https://embeddings-286240844421.us-central1.run.app",
             "headers": {"Content-Type": "application/json"},
             "body": json.dumps(task_data).encode(),
+            "oidc_token": {
+                "service_account_email": "286240844421-compute@developer.gserviceaccount.com"
+            },
         }
     }
 
@@ -173,7 +178,6 @@ def file_to_nosql(file, user_id):
         mime_type = file.mimetype
 
         print(f"File is {len(file_data)} bytes and type: {mime_type}")
-        print(mime_type)
 
         extracted_text = []
         if mime_type == "application/pdf":
