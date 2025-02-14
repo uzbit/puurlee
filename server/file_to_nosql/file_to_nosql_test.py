@@ -28,15 +28,15 @@ class FakeFile:
 class TestFileToSql(unittest.TestCase):
     def setUp(self):
         self.jpg_file = Path(__file__).parent.parent.parent / "test/jpg/test1.jpg"
-        self.jpg_file = Path(__file__).parent.parent.parent / "test/pdf/test1.pdf"
+        self.pdf_file = Path(__file__).parent.parent.parent / "test/pdf/test1.pdf"
 
         self.file_jpg = FakeFile(
             "test1.jpg", open(self.jpg_file, "rb").read(), "image/jpeg"
         )
         self.file_pdf = FakeFile(
-            "test1.pdf", open(self.jpg_file, "rb").read(), "application/pdf"
+            "test1.pdf", open(self.pdf_file, "rb").read(), "application/pdf"
         )
-        self.test_doc_id = "Akyc7QWwIbVk8rxrKaaT"
+        self.test_doc_id = "xpfRPjkYTktkSFL7UZmd"
 
     def test_extract_table_data_tesseract_from_bytes_jpg(self):
         with open(self.jpg_file, "rb") as f:
@@ -50,7 +50,7 @@ class TestFileToSql(unittest.TestCase):
     def test_file_to_nosql_pdf(self):
         file_to_nosql(self.file_pdf, "test")
 
-    def _test_enqueue_embeddings_task(self):
+    def test_enqueue_embeddings_task(self):
         # import google.auth
 
         # creds, project_id = google.auth.default()

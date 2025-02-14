@@ -21,13 +21,14 @@ index_name = "puurlee-test"  # the index where you stored user data
 index = pc.Index(index_name)
 
 
-def retrieve_relevant_chunks(user_id, query, top_k=3):
+def retrieve_relevant_chunks(user_id, query, top_k=10):
     """
     1. Create query embedding
     2. Query pinecone
     3. Return the top_k chunks
     """
     query_embedding = embed_text(oa, query)
+
     # Pinecone expects a single vector as a list, top_k results
     result = index.query(
         vector=query_embedding,
@@ -37,11 +38,11 @@ def retrieve_relevant_chunks(user_id, query, top_k=3):
     )
 
     # each match has .metadata["chunk"] if you stored your chunk text under "chunk"
-    chunks = []
+    matches = []
     for match in result["matches"]:
-        chunk_text = match["metadata"].get("chunk", "")
-        chunks.append(chunk_text)
-    return chunks
+        match_text = match["metadata"].get("text", "")
+        matches.append(match_text)
+    return matches
 
 
 def answer_health_question(user_id, query):
@@ -51,8 +52,8 @@ def answer_health_question(user_id, query):
     3. Call OpenAI to generate an answer
     """
     # 1. Retrieve relevant data from Pinecone
-    relevant_chunks = retrieve_relevant_chunks(user_id, query, top_k=3)
-
+    relevant_chunks = retrieve_relevant_chunks(user_id, query)
+    print(relevant_chunks)
     # 2. Construct context for the LLM
     #    We combine the relevant chunks into a single string
     context = "\n\n".join(relevant_chunks)
@@ -60,7 +61,7 @@ def answer_health_question(user_id, query):
     # 3. Use a system message or a more advanced prompt. For example:
     system_prompt = (
         "You are a helpful health assistant with knowledge based on user-specific data.\n"
-        "You are not a doctor, so provide disclaimers if uncertain.\n"
+        "Assume that all data given are health status reports with actual quantative test results.\n"
         "Use the following data to answer the user's question:\n\n"
         f"{context}\n\n"
         "If the information is insufficient or unclear, say so."
@@ -68,7 +69,7 @@ def answer_health_question(user_id, query):
 
     # 4. Call OpenAI ChatCompletion
     response = oa.chat.completions.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o",  # "gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": query},

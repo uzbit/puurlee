@@ -55,7 +55,7 @@ def store_embeddings_in_pinecone(embeddings, user_id, doc_id):
     # print(embeddings)
     vectors_to_upsert = []
     for i, data in enumerate(embeddings):
-        vector_id = f"{user_id}-{doc_id}-chunk-{i}"
+        vector_id = f"{user_id}-{doc_id}"
         vectors_to_upsert.append(
             {
                 "id": vector_id,
@@ -63,7 +63,7 @@ def store_embeddings_in_pinecone(embeddings, user_id, doc_id):
                 "metadata": {
                     "user_id": user_id,
                     "doc_id": doc_id,
-                    "chunk": data["chunk"],
+                    "text": data["text"],
                     "timestamp": data["timestamp"],
                 },
             }
@@ -86,16 +86,10 @@ def create_embeddings(doc_id):
         raise Exception("No such document")
 
     user_id = doc_data["user_id"]
-    # print(text)
-    # print(f"^^^^ {doc_id} ^^^^")
-
-    chunk_embeddings = list()
+    doc_text = "\n".join(doc_data["content"])
+    embedding = embed_text(oa, doc_text)
     timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
-    for c in chunk_lines(doc_data["content"]):
-        e = embed_text(oa, c)
-        chunk_embeddings.append({"chunk": c, "vector": e, "timestamp": timestamp})
-
-    return chunk_embeddings, user_id
+    return [{"text": doc_text, "vector": embedding, "timestamp": timestamp}], user_id
 
 
 # Entry point for Google Cloud Function

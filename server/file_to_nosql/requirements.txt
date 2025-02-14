@@ -6,3 +6,4 @@ pytesseract
 functions-framework
 pillow
 pdf2image
+aiohttp
