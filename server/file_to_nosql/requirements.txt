@@ -1,9 +1,9 @@
 firebase-admin
 google-cloud
 google-cloud-firestore
+functions-framework
 google-cloud-tasks
 pytesseract
-functions-framework
 pillow
 pdf2image
 aiohttp

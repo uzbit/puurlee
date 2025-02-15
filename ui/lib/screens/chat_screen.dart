@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/chat_service.dart';
 
 // A basic message model
 class ChatMessage {
@@ -18,13 +20,12 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final _messages = <ChatMessage>[];
   final _textController = TextEditingController();
+  final user = FirebaseAuth.instance.currentUser;
 
   // Replace this with your AI call or backend integration
-  Future<String> _getAIResponse(String userMessage) async {
-    // Placeholder for AI logic.
-    // E.g. call your backend endpoint or a local LLM.
-    await Future.delayed(const Duration(seconds: 1));
-    return "Echoing back: $userMessage";
+  Future<String> _getAIResponse(String query) async {
+    String answer = await ChatService.postQuery(query: query, userId: user?.uid ?? '');
+    return answer;
   }
 
   void _handleSendMessage() async {

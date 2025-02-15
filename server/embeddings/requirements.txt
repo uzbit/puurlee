@@ -1,5 +1,5 @@
-functions-framework
 google-cloud
 google-cloud-firestore
+functions-framework
 pinecone
 openai

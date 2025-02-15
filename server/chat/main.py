@@ -1,4 +1,3 @@
-import datetime
 from openai import OpenAI
 from pinecone import Pinecone
 
