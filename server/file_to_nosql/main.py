@@ -4,16 +4,19 @@ from google.oauth2 import id_token
 import aiohttp
 import asyncio
 import pytesseract
-import datetime
 from io import BytesIO, StringIO
 from PIL import Image
 from pdf2image import convert_from_bytes
-from google.cloud import tasks_v2
 
-from google.cloud import firestore
 import firebase_admin
 from firebase_admin import storage
-from utils.Utilities import api_key_required, CORS_HEADERS, PUURLEE_API_KEY
+from utils.Utilities import (
+    structure_data,
+    insert_into_firestore,
+    api_key_required,
+    CORS_HEADERS,
+    PUURLEE_API_KEY,
+)
 
 # To build docker container:
 # From root
@@ -47,9 +50,6 @@ from utils.Utilities import api_key_required, CORS_HEADERS, PUURLEE_API_KEY
 
 # Initialize the Firebase Admin SDK
 firebase_admin.initialize_app(options={"storageBucket": "puurlee.appspot.com"})
-
-# Initialize Firestore
-db = firestore.Client()
 
 
 def upload_to_storage(file, user_id):
@@ -134,23 +134,6 @@ def extract_table_data_tesseract_from_bytes(image_data):
 #     return html_content
 
 
-def structure_data(text, storage_url, user_id):
-    timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
-    structured_data = {
-        "timestamp": timestamp,
-        "content": text,
-        "user_id": user_id,
-        "storage_url": storage_url,
-    }
-    return structured_data
-
-
-def insert_into_firestore(data):
-    # Insert the structured data into Firestore
-    doc_ref = db.collection("documents").add(data)
-    return doc_ref
-
-
 async def enqueue_embeddings_task(doc_id):
     url = "https://embeddings-286240844421.us-central1.run.app"
     audience = url
@@ -209,7 +192,7 @@ async def enqueue_embeddings_task(doc_id):
     #         "headers": {
     #             # "Content-Type": "application/json",
     #             "Content-Type": f"multipart/form-data; boundary={boundary}"
-    #             # "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImVlYzUzNGZhNWI4Y2FjYTIwMWNhOGQwZmY5NmI1NGM1NjIyMTBkMWUiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiIzMjU1NTk0MDU1OS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF6cCI6IjEwMDQ3OTg0NjU3MzYxMzYwNzMwNyIsImV4cCI6MTczOTIyODQwNywiaWF0IjoxNzM5MjI0ODA3LCJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDA0Nzk4NDY1NzM2MTM2MDczMDcifQ.ATl8I4KPyIzfCDs97-4XNExP2iE2E3nIcqPYdjJa07e6m2ZBd4YPE5py7DpDIjmkxobPjecTMWBjZjAgwhm8rlQrz5lm5xLRxq5fpd5cyPjwcOwOITOyc7gj3xEvbmsID1h6Vl0EnODRU-sLRBjRq570NakfqH60eJ3HF4KVd7GnMC6_2vlltFz2QfiLFEzRG4GAml-s3zTtsHiCPSGT0xZ66ZrqGLc7aM-5UJyVZpa0NitI4aHGFoqFnXbv1vELwGb65lOn5ohMW3oeVMnLdEvbt5cuoWdJ6fV3ikPMgZzF9Co7Uj-ZvwCibhhe9-7UH5_iuahs3BQDbK1RR0jOew",
+    #             # "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImVlYzUzNGZhNWI4Y2FjYTIwMWNhOGQwZmY5NmI1NGM1NjIyMTBkMWUiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiIzMjU1NTk0MDU1OS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF6cCI6IjEwMDQ3OTg0NjU3MzYxMzYwNzMwNyIsImV4cCI6MTczOTIyODQwNywiaWF0IjoxNzM5MjI0ODA3LCJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDA0Nzk4NDY1NzM2MTM2MDczMDcifQ.ATl8I4KPyIzfCDs97-4XNExP2iE2E3nIcqPYdjJa07e6m2ZBd4YPE5py7DpDIjmkxobPjecTMWBjZjAgwhm8rlQrz5lm5xLRxq5fpd5cyPjwcOwOITOyc7gj3xEvbmsID1h6Vl0EnODRU-sLRBjRq570NakfqH60eJ3HF4KVd7GnMC6_2vlltFz2QfiLFEzRG4GAml-s3zTtsHiCPSGT0xZ66ZrqGLc7aM-5UJyVZpa0NitI4aHGFoqFnXbv1vELwGb65lOn5ohMW3oeVMnLdEvbt5cuoWdJ6fV3ikPMgZzF9Co7Uj-ZvwCibhhe9-7UH5_iuahs3BQfirestore_dbK1RR0jOew",
     #         },
     #         "body": body_str, # json.dumps(task_data).encode(),
 
@@ -255,7 +238,9 @@ def file_to_nosql(file, user_id):
         storage_url = upload_to_storage(file, user_id)
 
         # Structure the data
-        structured_data = structure_data(extracted_text, storage_url, user_id)
+        structured_data = structure_data(
+            extracted_text, storage_url, user_id, "document"
+        )
 
         # Insert structured data into Firestore
         doc_ref = insert_into_firestore(structured_data)

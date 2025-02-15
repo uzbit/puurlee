@@ -2,8 +2,15 @@ import datetime
 from openai import OpenAI
 from pinecone import Pinecone
 
-from utils.Utilities import OPENAI_API_KEY, PINECONE_API_KEY
-from utils.Utilities import api_key_required, embed_text, CORS_HEADERS
+from utils.Utilities import OPENAI_API_KEY, PINECONE_API_KEY, CORS_HEADERS
+from utils.Utilities import (
+    structure_data,
+    api_key_required,
+    embed_text,
+    get_user_docs_by_type,
+    update_document_firestore,
+    insert_into_firestore,
+)
 
 # To call service:
 # curl -X POST \
@@ -21,11 +28,11 @@ index_name = "puurlee-test"  # the index where you stored user data
 index = pc.Index(index_name)
 
 
-def retrieve_relevant_chunks(user_id, query, top_k=10):
+def retrieve_relevant_docs(user_id, query, top_k=3):
     """
     1. Create query embedding
     2. Query pinecone
-    3. Return the top_k chunks
+    3. Return the top_k docs
     """
     query_embedding = embed_text(oa, query)
 
@@ -51,36 +58,67 @@ def answer_health_question(user_id, query):
     2. Construct a chat prompt
     3. Call OpenAI to generate an answer
     """
-    # 1. Retrieve relevant data from Pinecone
-    relevant_chunks = retrieve_relevant_chunks(user_id, query)
-    print(relevant_chunks)
-    # 2. Construct context for the LLM
-    #    We combine the relevant chunks into a single string
-    context = "\n\n".join(relevant_chunks)
+    # Retrieve relevant data from Pinecone
+    relevant_docs = retrieve_relevant_docs(user_id, query)
+    print("Num docs", len(relevant_docs))
 
-    # 3. Use a system message or a more advanced prompt. For example:
+    # Construct context for the LLM
+    context = "\n\n".join(relevant_docs)
+
+    # Get user conversation context
+    user_conversation_doc = get_user_docs_by_type(user_id, "conversation")
+    conversation = ""
+    conversation_doc_data = dict()
+    conversation_doc_id = None
+    if user_conversation_doc:
+        conversation_doc_id = user_conversation_doc.id
+        conversation_doc_data = user_conversation_doc.to_dict()
+        conversation += "\n" + conversation_doc_data["content"]
+
+    decline_msg = "Sorry, I'm here to assist with health and product related inquiries based on your health history and chat records."
+    print("Conversation before:", conversation_doc_id, conversation)
+    # Use a system message or a more advanced prompt. For example:
     system_prompt = (
         "You are a helpful health assistant with knowledge based on user-specific data.\n"
         "Assume that all data given are health status reports with actual quantative test results.\n"
         "Use the following data to answer the user's question:\n\n"
         f"{context}\n\n"
-        "If the information is insufficient or unclear, say so."
+        "Additionally, use the following conversation content to augment your response:\n\n"
+        f"{conversation}\n\n"
+        "If the information is insufficient or unclear, say so.\n"
+        f"If the query is not health or product related, always decline with '{decline_msg}' "
     )
 
-    # 4. Call OpenAI ChatCompletion
+    # Call OpenAI ChatCompletion
     response = oa.chat.completions.create(
         model="gpt-4o",  # "gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": query},
         ],
-        temperature=0.7,
+        temperature=0.4,
         max_tokens=300,
     )
 
-    # 5. Extract the assistant’s answer
+    # Extract the assistant’s answer
     answer = response.choices[0].message.content
-    print(answer)
+    print("\nAnswer:", answer + "\n")
+
+    add_to_conversation = query not in conversation
+    add_to_conversation &= decline_msg not in answer
+
+    if add_to_conversation:
+        conversation += query + "\n\n" + answer
+        conversation_doc_data = structure_data(
+            conversation, "", user_id, "conversation"
+        )
+        print("Conversation after:", conversation_doc_id, conversation)
+
+        if conversation_doc_id:
+            update_document_firestore(conversation_doc_id, conversation_doc_data)
+        else:
+            insert_into_firestore(conversation_doc_data)
+
     return (answer, 200, CORS_HEADERS)
 
 
@@ -92,4 +130,10 @@ def main(request):
         return ("", 204, CORS_HEADERS)
 
     if request.method == "POST":
-        doc_id = request.form.get("doc_id")
+        user_id = request.form.get("user_id")
+        query = request.form.get("query")
+
+        if user_id and query:
+            return answer_health_question(user_id, query)
+
+    return ("Bad request: user_id and query required.", 400, CORS_HEADERS)

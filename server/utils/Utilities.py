@@ -1,7 +1,9 @@
+import datetime
 from pathlib import Path
 import configparser
 from functools import wraps
 from flask import jsonify
+from google.cloud import firestore
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",  # Or restrict to specific domain
@@ -16,6 +18,50 @@ PUURLEE_API_KEY = config["Puurlee"]["api_key"]
 PROJECT_ID = config["Puurlee"]["project_id"]
 OPENAI_API_KEY = config["OpenAI"]["api_key"]
 PINECONE_API_KEY = config["Pinecone"]["api_key"]
+
+
+firestore_db = firestore.Client()
+
+
+def insert_into_firestore(data):
+    # Insert the structured data into Firestore
+    return firestore_db.collection("documents").add(data)
+
+
+def update_document_firestore(doc_id, data):
+    doc_ref = firestore_db.collection("documents").document(doc_id)
+
+    try:
+        doc_ref.update(data)
+        print(f"Document {doc_id} updated successfully!")
+    except Exception as e:
+        print(f"Error updating document {doc_id}: {e}")
+
+
+def structure_data(text, storage_url, user_id, doc_type):
+    timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
+    structured_data = {
+        "timestamp": timestamp,
+        "content": text,
+        "user_id": user_id,
+        "data_type": doc_type,
+        "storage_url": storage_url,
+    }
+    return structured_data
+
+
+def get_user_docs_by_type(user_id, data_type):
+    docs_ref = (
+        firestore_db.collection("documents")
+        .where("user_id", "==", user_id)
+        .where("data_type", "==", data_type)
+    )
+
+    results = docs_ref.stream()
+
+    # Should only be one conversation
+    for doc in results:
+        return doc
 
 
 def embed_text(oa, text):
