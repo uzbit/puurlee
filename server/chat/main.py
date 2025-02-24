@@ -16,7 +16,7 @@ from utils.Utilities import (
 #   -F "api_key=key" \
 #   -F "doc_id=Akyc7QWwIbVk8rxrKaaT"
 # http://localhost:8080
-#   https://embeddings-286240844421.us-central1.run.app
+#   https://chat-286240844421.us-central1.run.app
 
 PINECONE_INDEX = "puurlee-test"
 

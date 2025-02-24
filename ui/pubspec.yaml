@@ -37,6 +37,7 @@ dependencies:
   firebase_ui_auth:
   firebase_storage:
   google_sign_in:
+  sign_in_with_apple:
   firebase_ui_oauth_google:
   image_picker:
   file_picker:
@@ -44,6 +45,9 @@ dependencies:
   pdfx:
   image:
   auto_size_text:
+  hive:
+  hive_flutter:
+  path_provider:
 
 
 
@@ -53,6 +57,8 @@ dependencies:
 
   http: any
   http_parser: any
+  hive_generator:
+  build_runner:
 dev_dependencies:
   flutter_test:
     sdk: flutter

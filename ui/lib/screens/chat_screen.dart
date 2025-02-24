@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:hive/hive.dart';
+import 'package:puurlee/main.dart';
 import '../services/chat_service.dart';
+import '../utils/utils.dart';
+import '../models/chat_message.dart';
 
-// A basic message model
-class ChatMessage {
-  final String text;
-  final bool isUser;
-
-  ChatMessage({required this.text, required this.isUser});
-}
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -18,106 +15,115 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final _messages = <ChatMessage>[];
-  final _textController = TextEditingController();
+  List<ChatMessage> _messages = [];
+  final TextEditingController _textController = TextEditingController();
   final user = FirebaseAuth.instance.currentUser;
 
-  // Replace this with your AI call or backend integration
-  Future<String> _getAIResponse(String query) async {
-    String answer = await ChatService.postQuery(query: query, userId: user?.uid ?? '');
-    return answer;
+  @override
+  void initState() {
+    super.initState();
+    _loadChatHistory();
   }
 
+  void _loadChatHistory() {
+    var storedMessages = chatBox.get(user?.uid ?? 'default_user', defaultValue: <ChatMessage>[]);
+
+    if (storedMessages is List<ChatMessage>) {
+      setState(() {
+        _messages.addAll(storedMessages);
+      });
+    } else if (storedMessages is List) {
+      setState(() {
+        _messages.addAll(storedMessages.cast<ChatMessage>());
+      });
+    }
+  }
+
+  /// **Store chat history in Hive**
+  void _storeChatHistory() {
+   chatBox.put(user!.uid, _messages);
+  }
+
+  /// **Send a message and update UI**
   void _handleSendMessage() async {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
 
-    // Add user message to the list
+    // User message
+    ChatMessage userMessage = ChatMessage(text: text, isUser: true);
     setState(() {
-      _messages.add(ChatMessage(text: text, isUser: true));
+      _messages.add(userMessage);
     });
+    _storeChatHistory(); // Save message
+
     _textController.clear();
 
-    // Get AI response
-    final response = await _getAIResponse(text);
+    // AI response
+    final response = await ChatService.postQuery(query: text, userId: user?.uid ?? '');
 
-    // Add AI response to the list
+    ChatMessage botMessage = ChatMessage(text: response, isUser: false);
     setState(() {
-      _messages.add(ChatMessage(text: response, isUser: false));
+      _messages.add(botMessage);
     });
-  }
 
-  @override
-  void dispose() {
-    _textController.dispose();
-    super.dispose();
-  }
-
-  Widget _buildMessageBubble(ChatMessage message) {
-    // Align user messages to the right, AI messages to the left
-    final alignment = message.isUser ? Alignment.centerRight : Alignment.centerLeft;
-    final bubbleColor = message.isUser ? Colors.blue[100] : Colors.grey[200];
-    const textColor = Colors.black;
-
-    return Align(
-      alignment: alignment,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-        padding: const EdgeInsets.all(12.0),
-        decoration: BoxDecoration(
-          color: bubbleColor,
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: Text(
-          message.text,
-          style: const TextStyle(color: textColor),
-        ),
-      ),
-    );
+    _storeChatHistory(); // Save response
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("AI Chat"),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Display messages in a ListView
-            Expanded(
-              child: ListView.builder(
-                reverse: false,      // or true if you want new messages from the bottom
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final message = _messages[index];
-                  return _buildMessageBubble(message);
-                },
-              ),
-            ),
-            // Text input area
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _handleSendMessage(),
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.all(12.0),
-                      hintText: "Ask puurlee...",
+      appBar: AppBar(title: const Text("Chat")),
+      body: Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              itemCount: _messages.length,
+              itemBuilder: (context, index) {
+                final message = _messages[index];
+                return Align(
+                  alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  child: Container(
+                    padding: EdgeInsets.all(10),
+                    margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    decoration: BoxDecoration(
+                      color: message.isUser ? Colors.blueAccent : Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      message.text,
+                      style: TextStyle(color: message.isUser ? Colors.white : Colors.black),
                     ),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: _handleSendMessage,
-                ),
-              ],
+                );
+              },
             ),
-          ],
-        ),
+          ),
+          _buildMessageInput(),
+        ],
+      ),
+    );
+  }
+
+  /// **Message Input Field**
+  Widget _buildMessageInput() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _textController,
+              decoration: const InputDecoration(
+                hintText: "Type a message...",
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.send),
+            onPressed: _handleSendMessage,
+          ),
+        ],
       ),
     );
   }

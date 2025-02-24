@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'auth_gate.dart';
+import 'models/chat_message.dart';
 import 'options.dart';
 import 'utils/global_loading_widget.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+dynamic chatBox;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  Hive.registerAdapter(ChatMessageAdapter()); // Register adapter
+  if (!Hive.isBoxOpen('chatBox')) {
+    chatBox = await Hive.openBox<List>('chatBox'); // Open only if not already open
+  }
   runApp(const MyApp());
 }
 
