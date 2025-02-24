@@ -55,5 +55,15 @@
         </array>
       </dict>
     </array>
+    <key>NSCameraUsageDescription</key>
+    <string>This app requires access to the camera to allow users to capture and upload images.</string>
+    <key>UISupportsDocumentBrowser</key>
+    <true/>
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+    <key>UIFileSharingEnabled</key>
+    <true/>
+    <key>NSDocumentsDirectoryUsageDescription</key>
+    <string>This app needs access to documents stored on your device.</string>
 </dict>
 </plist>

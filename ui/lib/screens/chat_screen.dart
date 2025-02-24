@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:hive/hive.dart';
 import 'package:puurlee/main.dart';
 import '../services/chat_service.dart';
-import '../utils/utils.dart';
 import '../models/chat_message.dart';
 
 

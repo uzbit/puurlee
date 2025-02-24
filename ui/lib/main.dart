@@ -6,12 +6,15 @@ import 'options.dart';
 import 'utils/global_loading_widget.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 
 dynamic chatBox;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  final appDocumentDir = await getApplicationDocumentsDirectory();
+  await Hive.initFlutter(appDocumentDir.path); // ✅ Explicitly set path on iOS
   Hive.registerAdapter(ChatMessageAdapter()); // Register adapter
   if (!Hive.isBoxOpen('chatBox')) {
     chatBox = await Hive.openBox<List>('chatBox'); // Open only if not already open
