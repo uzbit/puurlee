@@ -12,6 +12,7 @@ google-services.json
 .buildlog/
 .history
 .svn/
+.firebase*
 **/.keys
 **/.venv/
 migrate_working_dir/

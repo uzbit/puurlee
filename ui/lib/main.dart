@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'auth_gate.dart';
@@ -13,8 +16,13 @@ dynamic chatBox;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  final appDocumentDir = await getApplicationDocumentsDirectory();
-  await Hive.initFlutter(appDocumentDir.path); // ✅ Explicitly set path on iOS
+  if (!kIsWeb) {
+    final appDocumentDir = await getApplicationDocumentsDirectory();
+    await Hive.initFlutter(appDocumentDir.path);
+  } else {
+    await Hive.initFlutter();
+  }
+
   Hive.registerAdapter(ChatMessageAdapter()); // Register adapter
   if (!Hive.isBoxOpen('chatBox')) {
     chatBox = await Hive.openBox<List>('chatBox'); // Open only if not already open

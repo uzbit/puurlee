@@ -6,4 +6,4 @@ google-cloud-tasks
 pytesseract
 pillow
 pdf2image
-aiohttp
+requests

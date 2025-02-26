@@ -1,8 +1,9 @@
 import csv
 import google
 from google.oauth2 import id_token
-import aiohttp
-import asyncio
+import threading
+import requests
+import time
 import pytesseract
 from io import BytesIO, StringIO
 from PIL import Image
@@ -134,7 +135,7 @@ def extract_table_data_tesseract_from_bytes(image_data):
 #     return html_content
 
 
-async def enqueue_embeddings_task(doc_id):
+def enqueue_embeddings_task(doc_id):
     url = "https://embeddings-286240844421.us-central1.run.app"
     audience = url
 
@@ -143,22 +144,43 @@ async def enqueue_embeddings_task(doc_id):
 
     # Build the multipart form-data
     # aiohttp requires a special way to send form fields
-    form_data = aiohttp.FormData()
-    form_data.add_field("api_key", PUURLEE_API_KEY)
-    form_data.add_field("doc_id", doc_id)
-
+    files = {'doc_id': (None, doc_id), 'api_key': (None, PUURLEE_API_KEY)}
+    
     headers = {
         "Authorization": f"Bearer {token}",
     }
+    def post():
+        requests.post(url, headers=headers, files=files)  # ignoring response
+    
+    # post()
+    threading.Thread(target=post, daemon=True).start()
+    time.sleep(1)
+        
+# async def enqueue_embeddings_task(doc_id):
+#     url = "https://embeddings-286240844421.us-central1.run.app"
+#     audience = url
 
-    async with aiohttp.ClientSession() as session:
-        async with session.post(url, data=form_data, headers=headers) as resp:
-            # text = await resp.text()
+#     auth_req = google.auth.transport.requests.Request()
+#     token = id_token.fetch_id_token(auth_req, audience)
 
-            if resp.status == 200:
-                print("Async call succeeded, set and forget.")
-            else:
-                print("Async call failed:", resp.status)
+#     # Build the multipart form-data
+#     # aiohttp requires a special way to send form fields
+#     form_data = aiohttp.FormData()
+#     form_data.add_field("api_key", PUURLEE_API_KEY)
+#     form_data.add_field("doc_id", doc_id)
+
+#     headers = {
+#         "Authorization": f"Bearer {token}",
+#     }
+#     print("HERE")
+#     async with aiohttp.ClientSession() as session:
+#         async with session.post(url, data=form_data, headers=headers) as resp:
+#             # text = await resp.text()
+#             print("RESP", resp.status)
+#             if resp.status == 200:
+#                 print("Async call succeeded, set and forget.")
+#             else:
+#                 print("Async call failed:", resp.status)
 
     # client = tasks_v2.CloudTasksClient()
     # queue = "embeddings-queue"
@@ -249,11 +271,10 @@ def file_to_nosql(file, user_id):
         print(response_body)
 
         # Schedule the embedding async function as a background task
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(enqueue_embeddings_task(doc_id))
-        loop.close()
-
+        print("Running embeddings...")
+        enqueue_embeddings_task(doc_id)
+        print("finished.")
+        
         return (response_body, 200, CORS_HEADERS)
 
     except Exception as e:

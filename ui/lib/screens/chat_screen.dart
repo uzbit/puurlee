@@ -15,12 +15,14 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   List<ChatMessage> _messages = [];
   final TextEditingController _textController = TextEditingController();
+  final ScrollController _scrollController = ScrollController(); // ScrollController
   final user = FirebaseAuth.instance.currentUser;
 
   @override
   void initState() {
     super.initState();
     _loadChatHistory();
+    _scrollToBottom();
   }
 
   void _loadChatHistory() {
@@ -35,6 +37,25 @@ class _ChatScreenState extends State<ChatScreen> {
         _messages.addAll(storedMessages.cast<ChatMessage>());
       });
     }
+  }
+
+  void _updateMessages(){
+    _storeChatHistory();
+    _scrollToBottom();
+  }
+
+  void _scrollToBottom() {
+    // Ensure that the new frame is rendered before scrolling
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        //_scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   /// **Store chat history in Hive**
@@ -52,7 +73,7 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _messages.add(userMessage);
     });
-    _storeChatHistory(); // Save message
+    _updateMessages(); // Save message
 
     _textController.clear();
 
@@ -64,7 +85,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _messages.add(botMessage);
     });
 
-    _storeChatHistory(); // Save response
+    _updateMessages(); // Save response
   }
 
   @override
@@ -75,6 +96,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Expanded(
             child: ListView.builder(
+              controller: _scrollController,
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 final message = _messages[index];
