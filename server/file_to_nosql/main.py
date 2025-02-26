@@ -117,24 +117,6 @@ def extract_table_data_tesseract_from_bytes(image_data):
     return extracted_lines
 
 
-# def convert_to_html_with_formatting(text):
-#     """
-#     Convert extracted text to basic HTML format with paragraphs and line breaks.
-#     """
-#     # Escape any HTML special characters (optional)
-#     escaped_text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-
-#     # Replace line breaks with HTML <br> and paragraphs with <p> tags
-#     html_content = "<html><body>"
-#     paragraphs = escaped_text.split("\n\n")  # Assume paragraphs are separated by double line breaks
-#     for paragraph in paragraphs:
-#         if paragraph.strip():  # Only wrap non-empty paragraphs
-#             html_content += f"<p>{paragraph.replace('\n', '<br>')}</p>"
-#     html_content += "</body></html>"
-
-#     return html_content
-
-
 def enqueue_embeddings_task(doc_id):
     url = "https://embeddings-286240844421.us-central1.run.app"
     audience = url
@@ -155,81 +137,6 @@ def enqueue_embeddings_task(doc_id):
     # post()
     threading.Thread(target=post, daemon=True).start()
     time.sleep(1)
-        
-# async def enqueue_embeddings_task(doc_id):
-#     url = "https://embeddings-286240844421.us-central1.run.app"
-#     audience = url
-
-#     auth_req = google.auth.transport.requests.Request()
-#     token = id_token.fetch_id_token(auth_req, audience)
-
-#     # Build the multipart form-data
-#     # aiohttp requires a special way to send form fields
-#     form_data = aiohttp.FormData()
-#     form_data.add_field("api_key", PUURLEE_API_KEY)
-#     form_data.add_field("doc_id", doc_id)
-
-#     headers = {
-#         "Authorization": f"Bearer {token}",
-#     }
-#     print("HERE")
-#     async with aiohttp.ClientSession() as session:
-#         async with session.post(url, data=form_data, headers=headers) as resp:
-#             # text = await resp.text()
-#             print("RESP", resp.status)
-#             if resp.status == 200:
-#                 print("Async call succeeded, set and forget.")
-#             else:
-#                 print("Async call failed:", resp.status)
-
-    # client = tasks_v2.CloudTasksClient()
-    # queue = "embeddings-queue"
-    # location = "us-central1"
-    # project = "puurlee"
-
-    # parent = client.queue_path(project, location, queue)
-    # task_data = {"doc_id": doc_id, "api_key": PUURLEE_API_KEY}
-
-    # boundary = "MYBOUNDARY123"
-
-    # # Build the raw multipart form-data:
-    # # 1) Start boundary
-    # # 2) Content-Disposition for each field
-    # # 3) field value
-    # # 4) end boundary
-    # body_str = (
-    #     f"--{boundary}\r\n"
-    #     'Content-Disposition: form-data; name="api_key"\r\n\r\n'
-    #     f"{PUURLEE_API_KEY}\r\n"
-    #     f"--{boundary}\r\n"
-    #     'Content-Disposition: form-data; name="doc_id"\r\n\r\n'
-    #     f"{doc_id}\r\n"
-    #     f"--{boundary}--\r\n"
-    # )
-
-    # task = {
-    #     "http_request": {
-    #         "http_method": tasks_v2.HttpMethod.POST,
-    #         "url": "https://embeddings-286240844421.us-central1.run.app",  # Cloud Run URL
-    #         "headers": {
-    #             # "Content-Type": "application/json",
-    #             "Content-Type": f"multipart/form-data; boundary={boundary}"
-    #             # "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImVlYzUzNGZhNWI4Y2FjYTIwMWNhOGQwZmY5NmI1NGM1NjIyMTBkMWUiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiIzMjU1NTk0MDU1OS5hcHBzLmdvb2dsZXVzZXJjb250ZW50LmNvbSIsImF6cCI6IjEwMDQ3OTg0NjU3MzYxMzYwNzMwNyIsImV4cCI6MTczOTIyODQwNywiaWF0IjoxNzM5MjI0ODA3LCJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJzdWIiOiIxMDA0Nzk4NDY1NzM2MTM2MDczMDcifQ.ATl8I4KPyIzfCDs97-4XNExP2iE2E3nIcqPYdjJa07e6m2ZBd4YPE5py7DpDIjmkxobPjecTMWBjZjAgwhm8rlQrz5lm5xLRxq5fpd5cyPjwcOwOITOyc7gj3xEvbmsID1h6Vl0EnODRU-sLRBjRq570NakfqH60eJ3HF4KVd7GnMC6_2vlltFz2QfiLFEzRG4GAml-s3zTtsHiCPSGT0xZ66ZrqGLc7aM-5UJyVZpa0NitI4aHGFoqFnXbv1vELwGb65lOn5ohMW3oeVMnLdEvbt5cuoWdJ6fV3ikPMgZzF9Co7Uj-ZvwCibhhe9-7UH5_iuahs3BQfirestore_dbK1RR0jOew",
-    #         },
-    #         "body": body_str, # json.dumps(task_data).encode(),
-
-    #         # The key part: we use OIDC-based authentication
-    #         # "oidc_token": {
-    #         #     "service_account_email": "286240844421-compute@developer.gserviceaccount.com",
-    #         #     # (Optional) set 'audience' to the same URL if needed
-    #         #     # "audience": "https://embeddings-286240844421.us-central1.run.app"
-    #         # }
-    #     }
-    # }
-
-    # response = client.create_task(request={"parent": parent, "task": task})
-    # print(f"Created task {response.name}")
-
 
 def file_to_nosql(file, user_id):
     try:
