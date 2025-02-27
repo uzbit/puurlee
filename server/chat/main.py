@@ -84,7 +84,8 @@ def answer_health_question(user_id, query):
         f"{context}\n\n"
         "Additionally, use the following conversation content to augment your response:\n\n"
         f"{conversation}\n\n"
-        "If the information is insufficient or unclear, say so.\n"
+        "If the information is insufficient or unclear, say so.\n\n"
+        "You do not need to always state that the user should consult a healthcare professional, only for very important reasons.\n\n"
         f"If the query is not health or product related, always decline with '{decline_msg}' "
     )
 
@@ -107,7 +108,7 @@ def answer_health_question(user_id, query):
     add_to_conversation &= decline_msg not in answer
 
     if add_to_conversation:
-        conversation += query + "\n\n" + answer
+        conversation += query + "\n\n" + answer + "\n\n"
         conversation_doc_data = structure_data(
             conversation, "", user_id, "conversation"
         )
