@@ -4,7 +4,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../services/file_upload_service.dart';
 import '../utils/pdf_preview_widget.dart';
@@ -17,49 +16,35 @@ class DocumentUploadScreen extends StatefulWidget {
 }
 
 class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
-  XFile? _pickedFile;
   Uint8List? _fileBytes;
   String? _fileName;
+  String? _filePath;
   final int _maxFileSizeMB = 1;
 
   final user = FirebaseAuth.instance.currentUser;
 
   // 1. Helper method to pick a file (camera or file picker depending on platform)
   Future<void> _pickFile() async {
-    _pickedFile = null;
     _fileBytes = null;
     _fileName = null;
 
-    final picker = ImagePicker();
     try {
-      if (!kIsWeb) {
-        // On mobile, let’s pick from camera or gallery
-        // (you can adjust to always use camera or always use gallery, etc.)
-        _pickedFile = await picker.pickImage(
-            source: ImageSource.camera,
-            maxWidth: 1600,
-            maxHeight: 1200,
-            imageQuality: 85,   // JPEG quality: 0 to 100 (lower = smaller file size)
-        );
-        if (_pickedFile != null) {
-          _fileBytes = await _pickedFile!.readAsBytes();
-          _fileName = _pickedFile!.name;
-        }
-      } else {
-        // On web, use FilePicker
+        //Use FilePicker
         final allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf'];
         FilePickerResult? result = await FilePicker.platform.pickFiles(
           type: FileType.custom,
           allowedExtensions: allowedExtensions,
+            withData: true,
         );
 
         if (result != null) {
           _fileBytes = result.files.first.bytes;
           _fileName = result.files.first.name;
+          _filePath = result.files.first.path;
         }
-      }
+        print("$_filePath, ${_fileBytes?.length}, $user, ${user?.uid}");
 
-      setState(() {});
+        setState(() {});
     } catch (e) {
       print('Error picking file: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -82,8 +67,6 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       );
       return false;
     }
-
-    print("$_fileName, ${_fileBytes?.length}, $user, ${user?.uid}");
 
     try {
       await FileUploadService.postFileToDB(
@@ -108,9 +91,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
           _fileName!.toLowerCase().endsWith('.jpg') ||
           _fileName!.toLowerCase().endsWith('.jpeg')) {
         // Show image preview
-        previewWidget = kIsWeb
-            ? Image.memory(_fileBytes!)
-            : Image.file(File(_pickedFile!.path));
+        previewWidget = Image.file(File(_filePath!));
       } else if (_fileName!.toLowerCase().endsWith('.pdf')) {
         // Use a PDF viewer
         final pdfData = Uint8List.fromList(_fileBytes!);
@@ -141,7 +122,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
                 ElevatedButton.icon(
                   onPressed: _pickFile,
                   icon: const Icon(Icons.file_upload),
-                  label: const Text('Pick File'),
+                  label: const Text('Choose Health Document'),
                 ),
                 const SizedBox(height: 10),
                 ElevatedButton(

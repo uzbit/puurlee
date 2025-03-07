@@ -25,7 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Puurlee'),
+        //title: const Text('Puurlee'),
         actions: [
           IconButton(
             icon: const Icon(Icons.chat),

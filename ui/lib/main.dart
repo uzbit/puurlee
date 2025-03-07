@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
             // 2) Wrap the child in your GlobalLoadingWidget
             return GlobalLoadingWidget(child: child!);
           },
-          title: 'Puurlee',
+          //title: 'Puurlee',
           theme: ThemeData(
             // This is the theme of your application.
             //

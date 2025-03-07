@@ -106,7 +106,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     padding: EdgeInsets.all(10),
                     margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     decoration: BoxDecoration(
-                      color: message.isUser ? Colors.blueAccent : Colors.grey[300],
+                      color: message.isUser ? Colors.pinkAccent : Colors.red[100],
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(

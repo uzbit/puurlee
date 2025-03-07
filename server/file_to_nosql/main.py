@@ -126,17 +126,19 @@ def enqueue_embeddings_task(doc_id):
 
     # Build the multipart form-data
     # aiohttp requires a special way to send form fields
-    files = {'doc_id': (None, doc_id), 'api_key': (None, PUURLEE_API_KEY)}
-    
+    files = {"doc_id": (None, doc_id), "api_key": (None, PUURLEE_API_KEY)}
+
     headers = {
         "Authorization": f"Bearer {token}",
     }
+
     def post():
         requests.post(url, headers=headers, files=files)  # ignoring response
-    
+
     # post()
     threading.Thread(target=post, daemon=True).start()
     time.sleep(1)
+
 
 def file_to_nosql(file, user_id):
     try:
@@ -181,7 +183,7 @@ def file_to_nosql(file, user_id):
         print("Running embeddings...")
         enqueue_embeddings_task(doc_id)
         print("finished.")
-        
+
         return (response_body, 200, CORS_HEADERS)
 
     except Exception as e:

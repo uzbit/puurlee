@@ -39,7 +39,6 @@ dependencies:
   google_sign_in:
   sign_in_with_apple:
   firebase_ui_oauth_google:
-  image_picker:
   file_picker:
   mime:
   pdfx:
