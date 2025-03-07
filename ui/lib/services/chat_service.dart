@@ -1,8 +1,4 @@
-import 'dart:typed_data';
 import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
-import 'package:mime/mime.dart';
-import '../utils/global_loading_widget.dart';
 import '../options.dart';
 
 class ChatService {
