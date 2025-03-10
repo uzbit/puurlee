@@ -5,6 +5,7 @@ import 'package:firebase_ui_oauth_apple/firebase_ui_oauth_apple.dart';
 import 'package:flutter/material.dart';
 import 'options.dart' show googleClientID;
 import 'screens/home_screen.dart';
+import 'utils/assets.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -22,13 +23,7 @@ class AuthGate extends StatelessWidget {
               AppleProvider(),
             ],
             headerBuilder: (context, constraints, shrinkOffset) {
-              return Padding(
-                padding: const EdgeInsets.all(20),
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: Image.asset('assets/images/puurlee_logo.png'),
-                ),
-              );
+              return puurleeLogo;
             },
             subtitleBuilder: (context, action) {
               return Padding(
@@ -48,13 +43,7 @@ class AuthGate extends StatelessWidget {
               );
             },
             sideBuilder: (context, shrinkOffset) {
-              return Padding(
-                padding: const EdgeInsets.all(20),
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: Image.asset('assets/images/puurlee_logo.png'),
-                ),
-              );
+              return puurleeLogo;
             },
           );
         }

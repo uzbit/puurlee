@@ -91,7 +91,10 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("AI Chat")),
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          title: const Text("AI Chat")),
       body: Column(
         children: [
           Expanded(
@@ -106,7 +109,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     padding: EdgeInsets.all(10),
                     margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                     decoration: BoxDecoration(
-                      color: message.isUser ? Colors.pinkAccent : Colors.red[100],
+                      color: message.isUser ? Colors.greenAccent : Colors.green[100],
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(

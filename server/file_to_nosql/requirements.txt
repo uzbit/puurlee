@@ -1,6 +1,7 @@
 firebase-admin
 google-cloud
 google-cloud-firestore
+google-cloud-kms
 functions-framework
 google-cloud-tasks
 pytesseract

@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 
 import 'home_screen.dart';
 
-class EnterNameScreen extends StatefulWidget {
-  const EnterNameScreen({super.key});
+class EnterDetailsScreen extends StatefulWidget {
+  const EnterDetailsScreen({super.key});
 
   @override
-  _EnterNameScreenState createState() => _EnterNameScreenState();
+  _EnterDetailsScreenState createState() => _EnterDetailsScreenState();
 }
 
-class _EnterNameScreenState extends State<EnterNameScreen> {
+class _EnterDetailsScreenState extends State<EnterDetailsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -33,9 +33,7 @@ class _EnterNameScreenState extends State<EnterNameScreen> {
         await user.reload(); // Reload to make the changes effective
 
         // Navigate back to the home screen after update
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        Navigator.of(context).pushNamed("/");
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error updating display name: $e')),

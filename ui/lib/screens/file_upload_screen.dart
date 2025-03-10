@@ -108,7 +108,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     }
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
         title: const Text('Document Upload'),
       ),
       body: SingleChildScrollView(

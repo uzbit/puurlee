@@ -38,6 +38,26 @@ def update_document_firestore(doc_id, data):
         print(f"Error updating document {doc_id}: {e}")
 
 
+# def encrypt_text(text):
+#     # 1. Prepare KMS client
+#     client = kms.KeyManagementServiceClient()
+#     crypto_key_name = client.crypto_key_path(
+#         PROJECT_ID, LOCATION, KEY_RING_ID, CRYPTO_KEY_ID
+#     )
+
+#     # 2. Encrypt plaintext
+#     encrypt_response = client.encrypt(
+#         request={
+#             "name": crypto_key_name,
+#             "plaintext": plaintext_str.encode("utf-8"),
+#         }
+#     )
+#     ciphertext_bytes = encrypt_response.ciphertext
+
+#     # Convert to base64 to store in Firestore
+#     ciphertext_b64 = base64.b64encode(ciphertext_bytes).decode("utf-8")
+
+
 def structure_data(text, storage_url, user_id, doc_type):
     timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
     structured_data = {
