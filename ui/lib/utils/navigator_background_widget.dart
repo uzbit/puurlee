@@ -22,7 +22,7 @@ class _NavigatorWithBackgroundState extends State<NavigatorWithBackground> {
     return Stack(
       children: [
         Container(
-          color: Colors.green, //#Theme.of(context).colorScheme.onPrimary,
+          color: Colors.green[100], //#Theme.of(context).colorScheme.onPrimary,
         ),
         // 1) The one background image (never changes)
         const BackgroundWidget(),

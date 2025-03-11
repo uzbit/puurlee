@@ -60,26 +60,37 @@ class _CustomProfileScreen extends State<CustomProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return ProfileScreen(
-      // The actions property lets you add custom items
-      // like sign-out or other settings
-      actions: [
-        SignedOutAction((context) {
-          Navigator.of(context).pop(); // or some other flow
-        }),
-      ],
-
-      // children allows you to insert extra widgets
-      // into the bottom of the profile screen
-      children: [
-        // For example, an ElevatedButton that calls some custom function
-        ElevatedButton(
-          onPressed: () {
-            _onClearDataPressed();
-          },
-          child: const Text('Clear all personal data.'),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+          backgroundColor: Colors.transparent,
         ),
-      ],
+      body: Theme(
+          data: Theme.of(context).copyWith(
+          scaffoldBackgroundColor: Colors.transparent,
+        ),
+        child: ProfileScreen(
+          // The actions property lets you add custom items
+          // like sign-out or other settings
+          actions: [
+            SignedOutAction((context) {
+              Navigator.of(context).pop(); // or some other flow
+            }),
+          ],
+
+          // children allows you to insert extra widgets
+          // into the bottom of the profile screen
+          children: [
+            // For example, an ElevatedButton that calls some custom function
+            ElevatedButton(
+              onPressed: () {
+                _onClearDataPressed();
+              },
+              child: const Text('Clear all personal data.'),
+            ),
+          ],
+        )
+      )
     );
   }
 }

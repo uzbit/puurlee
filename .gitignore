@@ -12,6 +12,7 @@ google-services.json
 .buildlog/
 .history
 .svn/
+.cxx/
 .firebase*
 **/.keys
 **/.venv/

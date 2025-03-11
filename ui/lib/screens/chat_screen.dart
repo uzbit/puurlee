@@ -114,7 +114,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     child: Text(
                       message.text,
-                      style: TextStyle(color: message.isUser ? Colors.white : Colors.black),
+                      style: TextStyle(color: message.isUser ? Colors.black : Colors.black),
                     ),
                   ),
                 );
