@@ -26,7 +26,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
-        backgroundColor: Colors.transparent,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           //title: const Text('Puurlee'),

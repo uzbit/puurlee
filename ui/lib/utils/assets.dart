@@ -10,14 +10,7 @@ Padding puurleeLogo = Padding(
 );
 
 
-class BackgroundWidget extends StatefulWidget {
-  const BackgroundWidget({Key? key}) : super(key: key);
-
-  @override
-  _BackgroundWidgetState createState() => _BackgroundWidgetState();
-}
-
-class _BackgroundWidgetState extends State<BackgroundWidget> {
+class BackgroundImage {
   final List<String> _backgrounds = [
     "assets/images/black_pattern_01.png",
     "assets/images/black_pattern_02.png",
@@ -25,10 +18,9 @@ class _BackgroundWidgetState extends State<BackgroundWidget> {
 
   late String _selectedBackground;
   late Alignment _randomAlignment;
+  late BoxDecoration image;
 
-  @override
-  void initState() {
-    super.initState();
+  BackgroundImage() {
     final random = Random();
     _selectedBackground = _backgrounds[random.nextInt(_backgrounds.length)];
 
@@ -36,21 +28,15 @@ class _BackgroundWidgetState extends State<BackgroundWidget> {
     double randomX = random.nextDouble() * 2 - 1;
     double randomY = random.nextDouble() * 2 - 1;
     _randomAlignment = Alignment(randomX, randomY);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage(_selectedBackground),
-          opacity: .1,
-          fit: BoxFit.none,
-          alignment: _randomAlignment,
-        ),
+    image = BoxDecoration(
+      image: DecorationImage(
+        image: AssetImage(_selectedBackground),
+        opacity: .1,
+        fit: BoxFit.none,
+        alignment: _randomAlignment,
       ),
     );
   }
 }
 
-const Widget backgroundWidget = BackgroundWidget();
+var backgroundImage = BackgroundImage();

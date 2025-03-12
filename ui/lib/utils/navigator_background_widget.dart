@@ -21,11 +21,13 @@ class _NavigatorWithBackgroundState extends State<NavigatorWithBackground> {
 
   PageRoute _buildSharedAxisRoute(Widget page) {
     return PageRouteBuilder(
+      opaque: false,
       transitionDuration: const Duration(milliseconds: 300),
       reverseTransitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
         return SharedAxisTransition(
+          fillColor: Colors.transparent,
           animation: animation,
           secondaryAnimation: secondaryAnimation,
           transitionType: SharedAxisTransitionType.horizontal,
@@ -39,7 +41,7 @@ class _NavigatorWithBackgroundState extends State<NavigatorWithBackground> {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        backgroundWidget,
+        Container(decoration: backgroundImage.image),
         Navigator(
           key: _navigatorKey,
           initialRoute: '/',

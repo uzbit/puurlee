@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:puurlee/utils/assets.dart';
 
 import 'home_screen.dart';
 
@@ -45,6 +46,7 @@ class _EnterDetailsScreenState extends State<EnterDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text('Enter Your Name')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

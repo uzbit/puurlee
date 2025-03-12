@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
 import '../services/file_upload_service.dart';
+import '../utils/assets.dart';
 import '../utils/pdf_preview_widget.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
@@ -113,43 +114,41 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         backgroundColor: Colors.transparent,
         title: const Text('Document Upload'),
       ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                previewWidget,
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: _pickFile,
-                  icon: const Icon(Icons.file_upload),
-                  label: const Text('Choose Health Document'),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () async {
-                    // Call the upload function, which returns a success/failure boolean
-                    final success = await _uploadFile();
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              previewWidget,
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: _pickFile,
+                icon: const Icon(Icons.file_upload),
+                label: const Text('Choose Health Document'),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () async {
+                  // Call the upload function, which returns a success/failure boolean
+                  final success = await _uploadFile();
 
-                    if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('File uploaded successfully.'),
-                        ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Error uploading file.'),
-                        ),
-                      );
-                    }
-                  },
-                  child: const Text('Upload File'),
-                ),
-              ],
-            ),
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('File uploaded successfully.'),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Error uploading file.'),
+                      ),
+                    );
+                  }
+                },
+                child: const Text('Upload File'),
+              ),
+            ],
           ),
         ),
       ),
