@@ -34,14 +34,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-          // 1) Use the builder callback
           builder: (BuildContext context, Widget? child) {
-            // 2) Wrap the child in your GlobalLoadingWidget
             return GlobalLoadingWidget(child: child!);
           },
-          //title: 'Puurlee',
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
+            scaffoldBackgroundColor: Colors.transparent,
             useMaterial3: true,
           ),
           home: const NavigatorWithBackground()

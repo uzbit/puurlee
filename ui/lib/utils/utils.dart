@@ -53,3 +53,4 @@ Future<List<ChatMessage>> loadChatHistory(String userId) async {
   // Otherwise, return cached history
   return cachedChats;
 }
+

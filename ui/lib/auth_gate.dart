@@ -12,43 +12,48 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return SignInScreen(
-            providers: [
-              EmailAuthProvider(),
-              GoogleProvider(clientId: googleClientID),
-              AppleProvider(),
-            ],
-            headerBuilder: (context, constraints, shrinkOffset) {
-              return puurleeLogo;
-            },
-            subtitleBuilder: (context, action) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: action == AuthAction.signIn
-                    ? const Text('Welcome to Puurlee, please sign in!')
-                    : const Text('Welcome to Puurlee, please sign up!'),
+    return Theme(
+        data: Theme.of(context).copyWith(
+          scaffoldBackgroundColor: Colors.transparent,
+        ),
+        child: StreamBuilder<User?>(
+          stream: FirebaseAuth.instance.authStateChanges(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return SignInScreen(
+                providers: [
+                  EmailAuthProvider(),
+                  GoogleProvider(clientId: googleClientID),
+                  AppleProvider(),
+                ],
+                headerBuilder: (context, constraints, shrinkOffset) {
+                  return puurleeLogo;
+                },
+                subtitleBuilder: (context, action) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: action == AuthAction.signIn
+                        ? const Text('Welcome to Puurlee, please sign in!')
+                        : const Text('Welcome to Puurlee, please sign up!'),
+                  );
+                },
+                footerBuilder: (context, action) {
+                  return const Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Text(
+                      'By signing in, you agree to our terms and conditions.',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  );
+                },
+                sideBuilder: (context, shrinkOffset) {
+                  return puurleeLogo;
+                },
               );
-            },
-            footerBuilder: (context, action) {
-              return const Padding(
-                padding: EdgeInsets.only(top: 16),
-                child: Text(
-                  'By signing in, you agree to our terms and conditions.',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              );
-            },
-            sideBuilder: (context, shrinkOffset) {
-              return puurleeLogo;
-            },
-          );
-        }
-        return const HomeScreen();
-      },
+            }
+            return const HomeScreen();
+          },
+        )
     );
   }
 }
