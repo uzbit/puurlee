@@ -4,6 +4,7 @@ import 'package:puurlee/main.dart';
 import '../services/chat_service.dart';
 import '../models/chat_message.dart';
 import '../utils/assets.dart';
+import '../utils/typing_bubble_widget.dart';
 
 
 class ChatScreen extends StatefulWidget {
@@ -15,6 +16,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   List<ChatMessage> _messages = [];
+  bool _isTyping = false;
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController(); // ScrollController
   final user = FirebaseAuth.instance.currentUser;
@@ -78,12 +80,16 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _textController.clear();
 
+    setState(() {
+      _isTyping = true;
+    });
     // AI response
     final response = await ChatService.postQuery(query: text, userId: user?.uid ?? '');
 
     ChatMessage botMessage = ChatMessage(text: response, isUser: false);
     setState(() {
       _messages.add(botMessage);
+      _isTyping = false;
     });
 
     _updateMessages(); // Save response
@@ -122,6 +128,7 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
+          if (_isTyping) TypingBubble(),
           _buildMessageInput(),
         ],
       ),
