@@ -47,7 +47,7 @@ def retrieve_relevant_docs(user_id, query, top_k=3):
     # each match has .metadata["chunk"] if you stored your chunk text under "chunk"
     matches = []
     for match in result["matches"]:
-        match_text = decrypt_text(match["metadata"].get("text", ""))
+        match_text = decrypt_text(match["metadata"].get("content", ""))
         matches.append(match_text)
     return matches
 

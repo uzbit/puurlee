@@ -149,7 +149,7 @@ def run_tesseract_on_page(page):
     # 3) Retrieve the raw bytes
     page_data = buffered.getvalue()
     return run_tesseract_on_bytes(page_data)
-    
+
 
 def file_to_nosql(file, user_id):
     try:
@@ -165,7 +165,7 @@ def file_to_nosql(file, user_id):
             pages = convert_from_bytes(file_data)
             pool = Pool()
             pages = pool.map(run_tesseract_on_page, pages)
-            pool.close()   
+            pool.close()
             for page in pages:
                 extracted_text += page
             print(extracted_text)

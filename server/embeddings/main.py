@@ -89,7 +89,9 @@ def create_embeddings(doc_id):
     doc_text = decrypt_text(doc_data["content"])
     embedding = embed_text(oa, doc_text)
     timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
-    return [{"text": doc_data["content"], "vector": embedding, "timestamp": timestamp}], user_id
+    return [
+        {"text": doc_data["content"], "vector": embedding, "timestamp": timestamp}
+    ], user_id
 
 
 # Entry point for Google Cloud Function

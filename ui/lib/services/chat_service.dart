@@ -29,7 +29,7 @@ class ChatService {
       }
     } catch (e) {
       print('An error occurred while requesting chatbot response: $e');
-      return "Error: Something went wrong";
+      return "Error: Something went wrong $e";
     }
   }
 }
