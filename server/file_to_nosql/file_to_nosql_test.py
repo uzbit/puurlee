@@ -2,7 +2,7 @@ import io
 import unittest
 from pathlib import Path
 from main import (
-    extract_table_data_tesseract_from_bytes,
+    run_tesseract_on_bytes,
     file_to_nosql,
     enqueue_embeddings_task,
 )
@@ -36,12 +36,12 @@ class TestFileToSql(unittest.TestCase):
         self.file_pdf = FakeFile(
             "test1.pdf", open(self.pdf_file, "rb").read(), "application/pdf"
         )
-        self.test_doc_id = "xpfRPjkYTktkSFL7UZmd"
+        self.test_doc_id = "lDyWV7kLYhHTeFxZ3lpz"
 
-    def test_extract_table_data_tesseract_from_bytes_jpg(self):
+    def test_run_tesseract_on_bytes_jpg(self):
         with open(self.jpg_file, "rb") as f:
             image_bytes = f.read()
-            val = extract_table_data_tesseract_from_bytes(image_bytes)
+            val = run_tesseract_on_bytes(image_bytes)
             print(val)
 
     def test_file_to_nosql_jpg(self):

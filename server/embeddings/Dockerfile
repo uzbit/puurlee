@@ -16,7 +16,7 @@ WORKDIR /app
 # Copy requirements and install them (if you have dependencies)
 
 # Copy in your function code
-COPY chat/ /app
+COPY embeddings/ /app
 COPY utils /app/utils
 COPY options.ini /app
 RUN pip install --no-cache-dir -r /app/requirements.txt

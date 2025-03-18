@@ -3,8 +3,8 @@ from openai import OpenAI
 from pinecone import Pinecone
 from google.cloud import firestore
 
-from utils.Utilities import OPENAI_API_KEY, PINECONE_API_KEY
-from utils.Utilities import api_key_required, embed_text, CORS_HEADERS
+from utils.Utilities import OPENAI_API_KEY, PINECONE_API_KEY, CORS_HEADERS
+from utils.Utilities import api_key_required, embed_text, decrypt_text
 
 # To call service:
 # curl -X POST \
@@ -63,7 +63,7 @@ def store_embeddings_in_pinecone(embeddings, user_id, doc_id):
                 "metadata": {
                     "user_id": user_id,
                     "doc_id": doc_id,
-                    "text": data["text"],
+                    "content": data["text"],
                     "timestamp": data["timestamp"],
                 },
             }
@@ -86,10 +86,10 @@ def create_embeddings(doc_id):
         raise Exception("No such document")
 
     user_id = doc_data["user_id"]
-    doc_text = "\n".join(doc_data["content"])
+    doc_text = decrypt_text(doc_data["content"])
     embedding = embed_text(oa, doc_text)
     timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
-    return [{"text": doc_text, "vector": embedding, "timestamp": timestamp}], user_id
+    return [{"text": doc_data["content"], "vector": embedding, "timestamp": timestamp}], user_id
 
 
 # Entry point for Google Cloud Function

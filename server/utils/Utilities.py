@@ -4,6 +4,8 @@ import configparser
 from functools import wraps
 from flask import jsonify
 from google.cloud import firestore
+from google.cloud import kms
+import base64
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",  # Or restrict to specific domain
@@ -18,7 +20,10 @@ PUURLEE_API_KEY = config["Puurlee"]["api_key"]
 PROJECT_ID = config["Puurlee"]["project_id"]
 OPENAI_API_KEY = config["OpenAI"]["api_key"]
 PINECONE_API_KEY = config["Pinecone"]["api_key"]
-
+PROJECT_NAME = config["Puurlee"]["project_name"]
+LOCATION = config["KMS"]["location"]
+KEY_RING_ID = config["KMS"]["keyring_id"]
+CRYPTO_KEY_ID = config["KMS"]["crypto_key_id"]
 
 firestore_db = firestore.Client()
 
@@ -38,31 +43,58 @@ def update_document_firestore(doc_id, data):
         print(f"Error updating document {doc_id}: {e}")
 
 
-# def encrypt_text(text):
-#     # 1. Prepare KMS client
-#     client = kms.KeyManagementServiceClient()
-#     crypto_key_name = client.crypto_key_path(
-#         PROJECT_ID, LOCATION, KEY_RING_ID, CRYPTO_KEY_ID
-#     )
+def encrypt_text(text):
+    print("Encrypting text...")
+    # 1. Prepare KMS client
+    client = kms.KeyManagementServiceClient()
+    crypto_key_name = client.crypto_key_path(
+        PROJECT_NAME, LOCATION, KEY_RING_ID, CRYPTO_KEY_ID
+    )
 
-#     # 2. Encrypt plaintext
-#     encrypt_response = client.encrypt(
-#         request={
-#             "name": crypto_key_name,
-#             "plaintext": plaintext_str.encode("utf-8"),
-#         }
-#     )
-#     ciphertext_bytes = encrypt_response.ciphertext
+    # 2. Encrypt plaintext
+    encrypt_response = client.encrypt(
+        request={
+            "name": crypto_key_name,
+            "plaintext": text.encode("utf-8"),
+        }
+    )
+    ciphertext_bytes = encrypt_response.ciphertext
+    print("done.")
 
-#     # Convert to base64 to store in Firestore
-#     ciphertext_b64 = base64.b64encode(ciphertext_bytes).decode("utf-8")
+    # Convert to base64 to store in Firestore
+    return base64.b64encode(ciphertext_bytes).decode("utf-8")
 
 
-def structure_data(text, storage_url, user_id, doc_type):
+def decrypt_text(ciphertext):
+    print("Decrypting text...")
+    # 1. Prepare the KMS client and key path.
+    client = kms.KeyManagementServiceClient()
+    crypto_key_name = client.crypto_key_path(
+        PROJECT_NAME, LOCATION, KEY_RING_ID, CRYPTO_KEY_ID
+    )
+
+    # 2. Decode the base64-encoded ciphertext.
+    ciphertext_bytes = base64.b64decode(ciphertext)
+
+    # 3. Decrypt the ciphertext.
+    decrypt_response = client.decrypt(
+        request={
+            "name": crypto_key_name,
+            "ciphertext": ciphertext_bytes,
+        }
+    )
+    plaintext_bytes = decrypt_response.plaintext
+    print("done.")
+
+    # 4. Convert plaintext bytes to UTF-8 string.
+    return plaintext_bytes.decode("utf-8")
+
+
+def encrypt_and_structure_data(text, storage_url, user_id, doc_type):
     timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
     structured_data = {
         "timestamp": timestamp,
-        "content": text,
+        "content": encrypt_text(text),
         "user_id": user_id,
         "data_type": doc_type,
         "storage_url": storage_url,

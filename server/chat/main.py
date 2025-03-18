@@ -3,12 +3,13 @@ from pinecone import Pinecone
 
 from utils.Utilities import OPENAI_API_KEY, PINECONE_API_KEY, CORS_HEADERS
 from utils.Utilities import (
-    structure_data,
+    encrypt_and_structure_data,
     api_key_required,
     embed_text,
     get_user_docs_by_type,
     update_document_firestore,
     insert_into_firestore,
+    decrypt_text,
 )
 
 # To call service:
@@ -46,7 +47,7 @@ def retrieve_relevant_docs(user_id, query, top_k=3):
     # each match has .metadata["chunk"] if you stored your chunk text under "chunk"
     matches = []
     for match in result["matches"]:
-        match_text = match["metadata"].get("text", "")
+        match_text = decrypt_text(match["metadata"].get("text", ""))
         matches.append(match_text)
     return matches
 
@@ -72,7 +73,7 @@ def answer_health_question(user_id, query):
     if user_conversation_doc:
         conversation_doc_id = user_conversation_doc.id
         conversation_doc_data = user_conversation_doc.to_dict()
-        conversation += "\n" + conversation_doc_data["content"]
+        conversation += "\n" + decrypt_text(conversation_doc_data["content"])
 
     decline_msg = "Sorry, I'm here to assist with health and product related inquiries based on your health history and chat records."
     print("Conversation before:", conversation_doc_id, conversation)
@@ -109,7 +110,7 @@ def answer_health_question(user_id, query):
 
     if add_to_conversation:
         conversation += query + "\n\n" + answer + "\n\n"
-        conversation_doc_data = structure_data(
+        conversation_doc_data = encrypt_and_structure_data(
             conversation, "", user_id, "conversation"
         )
         print("Conversation after:", conversation_doc_id, conversation)

@@ -1,6 +1,7 @@
 import csv
 import google
 from google.oauth2 import id_token
+from multiprocessing import Pool
 import threading
 import requests
 import time
@@ -12,7 +13,7 @@ from pdf2image import convert_from_bytes
 import firebase_admin
 from firebase_admin import storage
 from utils.Utilities import (
-    structure_data,
+    encrypt_and_structure_data,
     insert_into_firestore,
     api_key_required,
     CORS_HEADERS,
@@ -62,7 +63,7 @@ def upload_to_storage(file, user_id):
     return storage_url
 
 
-def extract_table_data_tesseract_from_bytes(image_data):
+def run_tesseract_on_bytes(image_data):
     """
     Performs OCR on the given image bytes using Tesseract in TSV mode (PSM 6),
     reads the output, and groups text by line.
@@ -133,12 +134,22 @@ def enqueue_embeddings_task(doc_id):
     }
 
     def post():
-        requests.post(url, headers=headers, files=files)  # ignoring response
+        response = requests.post(url, headers=headers, files=files)  # ignoring response
+        print(response.text)
 
-    # post()
     threading.Thread(target=post, daemon=True).start()
     time.sleep(1)
 
+
+def run_tesseract_on_page(page):
+    # 1) Create an in-memory buffer
+    buffered = BytesIO()
+    # 2) Save the PIL image to that buffer in some format (PNG, JPEG, etc.)
+    page.save(buffered, format="PNG")
+    # 3) Retrieve the raw bytes
+    page_data = buffered.getvalue()
+    return run_tesseract_on_bytes(page_data)
+    
 
 def file_to_nosql(file, user_id):
     try:
@@ -152,25 +163,22 @@ def file_to_nosql(file, user_id):
         extracted_text = []
         if mime_type == "application/pdf":
             pages = convert_from_bytes(file_data)
-            for i, page in enumerate(pages, start=1):
-                # 1) Create an in-memory buffer
-                buffered = BytesIO()
-
-                # 2) Save the PIL image to that buffer in some format (PNG, JPEG, etc.)
-                page.save(buffered, format="PNG")
-
-                # 3) Retrieve the raw bytes
-                page_data = buffered.getvalue()
-
-                extracted_text += extract_table_data_tesseract_from_bytes(page_data)
+            pool = Pool()
+            pages = pool.map(run_tesseract_on_page, pages)
+            pool.close()   
+            for page in pages:
+                extracted_text += page
+            print(extracted_text)
         else:
-            extracted_text = extract_table_data_tesseract_from_bytes(file_data)
+            extracted_text = run_tesseract_on_bytes(file_data)
 
-        storage_url = upload_to_storage(file, user_id)
+        storage_url = "NOT_STORED"  # upload_to_storage(file, user_id)
+
+        text = "\n".join(extracted_text)
 
         # Structure the data
-        structured_data = structure_data(
-            extracted_text, storage_url, user_id, "document"
+        structured_data = encrypt_and_structure_data(
+            text, storage_url, user_id, "document"
         )
 
         # Insert structured data into Firestore
@@ -180,13 +188,16 @@ def file_to_nosql(file, user_id):
         print(response_body)
 
         # Schedule the embedding async function as a background task
-        print("Running embeddings...")
+        print("Request embeddings...")
         enqueue_embeddings_task(doc_id)
-        print("finished.")
+        print("done.")
 
         return (response_body, 200, CORS_HEADERS)
 
     except Exception as e:
+        import traceback as tb
+
+        print(tb.format_exc())
         print("ERROR:", e)
         response_body = f"Error inserting file data. {e}"
         return (response_body, 500, CORS_HEADERS)
