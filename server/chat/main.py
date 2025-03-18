@@ -28,7 +28,7 @@ index_name = "puurlee-test"  # the index where you stored user data
 index = pc.Index(index_name)
 
 
-def retrieve_relevant_docs(user_id, query, top_k=3):
+def retrieve_relevant_docs(user_id, query, top_k=5):
     """
     1. Create query embedding
     2. Query pinecone
@@ -60,7 +60,6 @@ def answer_health_question(user_id, query):
     """
     # Retrieve relevant data from Pinecone
     relevant_docs = retrieve_relevant_docs(user_id, query)
-    print("Num docs", len(relevant_docs))
 
     # Construct context for the LLM
     context = "\n\n".join(relevant_docs)

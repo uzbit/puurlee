@@ -1,8 +1,7 @@
 from google.cloud import firestore
-import firebase_admin
 from firebase_admin import storage
-
-from utils.Utilities import api_key_required, CORS_HEADERS
+from pinecone import Pinecone
+from utils.Utilities import PINECONE_API_KEY, api_key_required, CORS_HEADERS
 
 
 ## To build docker container:
@@ -37,6 +36,10 @@ from utils.Utilities import api_key_required, CORS_HEADERS
 
 # Initialize Firestore
 db = firestore.Client()
+pc = Pinecone(api_key=PINECONE_API_KEY)
+
+index_name = "puurlee-test"  # the index where you stored user data
+index = pc.Index(index_name)
 
 
 def clear_storage(user_id):
@@ -65,6 +68,17 @@ def clear_firestore(user_id):
         delete_count += 1
 
     print(f"Deleted {delete_count} documents for user_id '{user_id}'.")
+
+
+def clear_pinecone(user_id):
+    # Need to upgrade account to clear with filter
+    try:
+        # Delete all vectors where the metadata field "user_id" equals the provided user_id.
+        # Note: The exact syntax depends on your Pinecone client version.
+        index.delete(filter={"user_id": {"$eq": user_id}})
+        print(f"Deleted Pinecone vectors for user_id '{user_id}'.")
+    except Exception as e:
+        print(f"Error deleting Pinecone vectors for user_id '{user_id}': {e}")
 
 
 def clear_user_data(user_id):

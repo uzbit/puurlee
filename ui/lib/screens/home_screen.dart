@@ -45,25 +45,32 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
           automaticallyImplyLeading: false,
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          // Display a welcome message, no file preview here anymore
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              puurleeLogo,
-              AutoSizeText(
-                'Hi ${user?.displayName ?? "You"}!',
-                style: Theme.of(context).textTheme.displaySmall,
-                textAlign: TextAlign.center,
-                maxLines: 1, // Only one line; the text will shrink if it's too long
-                minFontSize: 12, // The smallest font size allowed
-                overflow: TextOverflow.ellipsis, // If it still doesn't fit
-              ),
-              //const SizedBox(height: 20),
-              const Text('Use the + button to upload documents.'),
-            ],
-          ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        // Use a Column that fills the available space and
+        // pin its children at the bottom.
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            // Group the logo, hi text, and bottom text together
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                puurleeLogo,
+                AutoSizeText(
+                  'Hi ${user?.displayName ?? "You"}!',
+                  style: Theme.of(context).textTheme.displaySmall,
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  minFontSize: 12,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const Text('Use the + button to upload documents.'),
+              ],
+            ),
+            const SizedBox(height: 20), // Optional padding from the bottom
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton(

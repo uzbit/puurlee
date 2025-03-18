@@ -2,3 +2,4 @@ google-cloud
 google-cloud-firestore
 functions-framework
 firebase-admin
+pinecone
