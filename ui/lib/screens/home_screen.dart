@@ -45,16 +45,18 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
           automaticallyImplyLeading: false,
       ),
-      body: Container(
+      body: Scaffold(body: Center(child: SizedBox(
         // Use the full available height and width
-        width: double.infinity,
-        height: double.infinity,
+        width: 600,
+        height: MediaQuery.of(context).size.height,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Top portion: show your logo, etc.
             Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 puurleeLogo,
                 // If you have more widgets at the top, place them here
@@ -63,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
             // Bottom portion: "Hi username" and its text
             Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 AutoSizeText(
                   'Hi ${user?.displayName ?? "You"}!',
@@ -78,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-      ),
+      ))),
       floatingActionButton: FloatingActionButton(
         // Change to a plus icon
         onPressed: () {
