@@ -46,18 +46,24 @@ class _HomeScreenState extends State<HomeScreen> {
           automaticallyImplyLeading: false,
       ),
       body: Container(
+        // Use the full available height and width
         width: double.infinity,
         height: double.infinity,
-        // Use a Column that fills the available space and
-        // pin its children at the bottom.
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Group the logo, hi text, and bottom text together
+            // Top portion: show your logo, etc.
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 puurleeLogo,
+                // If you have more widgets at the top, place them here
+              ],
+            ),
+            // Bottom portion: "Hi username" and its text
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
                 AutoSizeText(
                   'Hi ${user?.displayName ?? "You"}!',
                   style: Theme.of(context).textTheme.displaySmall,
@@ -67,9 +73,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const Text('Use the + button to upload documents.'),
+                const SizedBox(height: 20), // Padding from the bottom
               ],
             ),
-            const SizedBox(height: 20), // Optional padding from the bottom
           ],
         ),
       ),
