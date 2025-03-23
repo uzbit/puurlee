@@ -63,7 +63,7 @@ def store_embeddings_in_pinecone(embeddings, user_id, doc_id):
                 "metadata": {
                     "user_id": user_id,
                     "doc_id": doc_id,
-                    "content": data["text"],
+                    "content": data["content"],
                     "timestamp": data["timestamp"],
                 },
             }
@@ -90,7 +90,7 @@ def create_embeddings(doc_id):
     embedding = embed_text(oa, doc_text)
     timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
     return [
-        {"text": doc_data["content"], "vector": embedding, "timestamp": timestamp}
+        {"content": doc_data["content"], "vector": embedding, "timestamp": timestamp}
     ], user_id
 
 
