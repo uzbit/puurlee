@@ -9,12 +9,14 @@ class ChatService {
   static Future<String> postQuery({
     required String query,
     required String userId,
+    required String userName,
   }) async {
     try {
       var request = http.MultipartRequest('POST', Uri.parse(_chatUrl));
 
       request.fields['query'] = query;
       request.fields['user_id'] = userId;
+      request.fields['user_name'] = userName;
       request.fields['api_key'] = puurleeServerAPIKey;
 
       var response = await request.send();

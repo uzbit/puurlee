@@ -163,7 +163,7 @@ def file_to_nosql(file, user_id):
         extracted_text = []
         if mime_type == "application/pdf":
             pages = convert_from_bytes(file_data)
-            pool = Pool(20)
+            pool = Pool()
             pages = pool.map(run_tesseract_on_page, pages)
             pool.close()
             for page in pages:

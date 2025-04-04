@@ -52,7 +52,7 @@ def retrieve_relevant_docs(user_id, query, top_k=5):
     return matches
 
 
-def answer_health_question(user_id, query):
+def answer_health_question(user_id, user_name, query):
     """
     1. Retrieve relevant chunks from Pinecone
     2. Construct a chat prompt
@@ -60,6 +60,11 @@ def answer_health_question(user_id, query):
     """
     # Retrieve relevant data from Pinecone
     relevant_docs = retrieve_relevant_docs(user_id, query)
+
+    if not relevant_docs:
+        answer = f"Sorry {user_name}, I do not have access to any of your health information. Use the + icon on the home screen to upload relevant health documents."
+        print(answer)
+        return (answer, 200, CORS_HEADERS)
 
     # Construct context for the LLM
     context = "\n\n".join(relevant_docs)
@@ -78,6 +83,7 @@ def answer_health_question(user_id, query):
     print("Conversation before:", conversation_doc_id, conversation)
     # Use a system message or a more advanced prompt. For example:
     system_prompt = (
+        f"The user's name is {user_name}.\n"
         "You are a helpful health assistant with knowledge based on user-specific data.\n"
         "Assume that all data given are health status reports with actual quantative test results.\n"
         "Use the following data to answer the user's question:\n\n"
@@ -131,9 +137,10 @@ def main(request):
 
     if request.method == "POST":
         user_id = request.form.get("user_id")
+        user_name = request.form.get("user_name")
         query = request.form.get("query")
 
         if user_id and query:
-            return answer_health_question(user_id, query)
+            return answer_health_question(user_id, user_name, query)
 
     return ("Bad request: user_id and query required.", 400, CORS_HEADERS)

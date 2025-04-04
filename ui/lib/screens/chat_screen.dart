@@ -84,7 +84,7 @@ class _ChatScreenState extends State<ChatScreen> {
       _isTyping = true;
     });
     // AI response
-    final response = await ChatService.postQuery(query: text, userId: user?.uid ?? '');
+    final response = await ChatService.postQuery(query: text, userId: user!.uid, userName: user!.displayName ?? "");
 
     ChatMessage botMessage = ChatMessage(text: response, isUser: false);
     setState(() {

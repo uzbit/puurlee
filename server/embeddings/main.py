@@ -22,28 +22,28 @@ oa = OpenAI(api_key=OPENAI_API_KEY)
 pc = Pinecone(api_key=PINECONE_API_KEY)
 
 
-def chunk_lines(lines, num_lines=10):
-    def divide_number(X, N):
-        base_size = X // N  # Base size for each part
-        remainder = X % N  # Extra units to distribute
+# def chunk_lines(lines, num_lines=10):
+#     def divide_number(X, N):
+#         base_size = X // N  # Base size for each part
+#         remainder = X % N  # Extra units to distribute
 
-        # First 'remainder' parts get (base_size + 1)
-        parts = [N] * base_size
-        for i in range(len(parts)):
-            parts[i] += remainder // base_size
+#         # First 'remainder' parts get (base_size + 1)
+#         parts = [N] * base_size
+#         for i in range(len(parts)):
+#             parts[i] += remainder // base_size
 
-        # Distribute the last remaining over parts
-        for i in range(X - sum(parts)):
-            parts[i] += 1
+#         # Distribute the last remaining over parts
+#         for i in range(X - sum(parts)):
+#             parts[i] += 1
 
-        return parts
+#         return parts
 
-    chunk_sizes = divide_number(len(lines), num_lines)
-    start = 0
-    for c in chunk_sizes:
-        end = min(start + c, len(lines))
-        yield lines[start:end]
-        start = end
+#     chunk_sizes = divide_number(len(lines), num_lines)
+#     start = 0
+#     for c in chunk_sizes:
+#         end = min(start + c, len(lines))
+#         yield lines[start:end]
+#         start = end
 
 
 def store_embeddings_in_pinecone(embeddings, user_id, doc_id):
